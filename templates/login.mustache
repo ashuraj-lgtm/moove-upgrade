@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template theme_moove/login
+    @template theme_boost/login
 
     Login page template
 
@@ -29,45 +29,26 @@
         }
     }
 }}
-
-{{{ output.doctype }}}
-<html {{{ output.htmlattributes }}}>
-<head>
-    <title>{{{ output.page_title }}}</title>
-    <link rel="shortcut icon" href="{{{ output.favicon }}}" />
-    {{{ output.standard_head_html }}}
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
-
-    <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet">
-</head>
+{{> theme_boost/head }}
 
 <body {{{ bodyattributes }}}>
+{{> core/local/toast/wrapper}}
 
 <div id="page-wrapper">
 
     {{{ output.standard_top_of_body_html }}}
 
-    <div id="page" class="container-fluid mt-0">
-        <div id="page-content" class="row">
-            <div id="region-main-box" class="col-12">
-                <section id="region-main" class="col-12">
-                    {{{ output.course_content_header }}}
-                    {{{ output.main_content }}}
-                    {{{ output.course_content_footer }}}
-                </section>
-            </div>
-        </div>
+    <div id="page" class="mt-0">
+        {{> core/login_layout }}
     </div>
+    {{> theme_boost/footer }}
 </div>
-
-{{{ output.standard_footer_html }}}
-
-{{{ output.standard_end_of_body_html }}}
 
 </body>
 </html>
 {{#js}}
-require(['theme_boost/loader']);
+    M.util.js_pending('theme_boost/loader');
+    require(['theme_boost/loader'], function() {
+        M.util.js_complete('theme_boost/loader');
+    });
 {{/js}}

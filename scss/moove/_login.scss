@@ -1,166 +1,135 @@
-#page-login-index.moove-login {
-    background-color: #f1f1f1;
-    margin-left: 0;
+.pagelayout-login {
+    #page {
+        max-width: 100%;
+        background: none;
 
-    #page-wrapper {
-        padding-bottom: 0;
-
-        #page {
-            margin-top: 0;
-            background-size: cover;
-            background-position: center;
-            min-height: 100vh;
-        }
-
-        &::after {
-            min-height: 0;
+        .login-layout-left::after {
+            content: "" !important;
         }
     }
 
-    .logo {
-        text-align: center;
-        margin-bottom: 2rem;
+    .login-identityprovider-btn.facebook {
+        background-color: $facebook-color;
+        color: #fff;
+    }
 
-        img {
-            max-height: 200px;
+    .loginform {
+        .login-form-forgotpassword {
+            text-align: center;
         }
-    }
 
-    .row {
-        margin: 0;
-    }
-
-    .instructionspanel {
-        border-radius: $m-login-padding;
-        border: none;
-    }
-
-    .loginpanel {
-        border-radius: $m-login-padding;
-        border: none;
-
-        .card-block {
-            padding: 0;
-
-            .form {
-                padding: 20px 15px;
-                height: $m-login-boxheight;
-                max-height: $m-login-boxheight;
-
-                .welcome {
-                    font-size: 1.2rem;
-                }
-
-                .input-group-addon {
-                    width: 40px;
-                    line-height: 30px;
-                    padding: 4px 10px;
-                    margin-bottom: 0;
-                    font-size: 1rem;
-                    text-align: center;
-                    background-color: #eceeef;
-                    border: 1px solid rgba(0,0,0,.15);
-                    border-right: 0;
-                }
-                .input-group-username .input-group-addon {
-                    border-bottom-left-radius: 0;
-                    border-bottom-right-radius: 0;
-                }
-                .input-group-password .input-group-addon {
-                    border-top: 0;
-                    border-top-left-radius: 0;
-                    border-top-right-radius: 0;
-                }
-                #username,
-                #password {
-                    border: 1px solid rgba(0, 0, 0, .15);
-                    height: 44px;
-                }
-                #username {
-                    border-bottom-left-radius: 0;
-                    border-bottom-right-radius: 0;
-                }
-                #password {
-                    border-top: 0;
-                    border-top-left-radius: 0;
-                    border-top-right-radius: 0;
-                }
-                #loginbtn {
-                    padding: 0.5rem;
-                }
-            }
-
-            .instructions {
-                background-color: $brand-primary;
-                padding: 60px 15px;
-                color: #fff;
-                min-height: $m-login-boxheight;
-
-                img {
-                    max-width: 100%;
-                }
-
-                .text-info {
-                    color: #fff !important;
-                }
-
-                h2,
-                h3 {
-                    color: #fff;
-                }
-
-                hr {
-                    width: 50%;
-                    margin-top: 0;
-                    border-top: 1px solid rgba(255, 255, 255, .7);
-                }
-
-                .m-t-2 {
-                    margin-top: 1rem !important;
-                }
-
-                .btn-secondary {
-                    border: none;
-                }
-            }
+        .login-heading {
+            text-align: center;
+            font-weight: 500;
         }
-    }
-
-    .box.generalbox.boxaligncenter {
-        border-color: $card-border-color;
-        border-radius: $card-border-radius;
-        -webkit-box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-        background-color: #fff;
-        padding: 2rem !important;
     }
 }
 
 #page-login-signup {
-    margin-left: 0;
-    #page-wrapper {
-        padding-bottom: 0;
-        margin-bottom: 0;
+    .signupform .full-width-labels {
+        display: flex;
+        flex-wrap: wrap;
 
-        &:after {
-            min-height: 0;
+        #fitem_id_username,
+        #fitem_id_password,
+        #fitem_id_firstname,
+        #fitem_id_lastname,
+        #fitem_id_city,
+        #fitem_id_country {
+            width: 50%;
         }
 
-        #page {
-            margin-top: 0;
-            padding-top: 50px;
-            padding-bottom: 50px;
+        #fitem_id_username,
+        #fitem_id_firstname,
+        #fitem_id_city {
+            padding-right: .5rem;
+        }
+
+        #fitem_id_password,
+        #fitem_id_lastname,
+        #fitem_id_country {
+            padding-left: .5rem;
+        }
+
+        #fitem_id_email,
+        #fitem_id_email2,
+        #fgroup_id_buttonar {
+            width: 100%;
         }
     }
 }
 
-.potentialidplist .potentialidp {
-    margin-bottom: 5px;
+@include media-breakpoint-up(md) {
+    #page-login-signup {
+        .login-container {
+            width: 640px !important; /* stylelint-disable-line declaration-no-important */
+        }
+    }
 }
 
-#page-login-signup,
-#page-login-index.moove-login {
-    .plugins_standard_footer_html {
-        display: none;
+@include media-breakpoint-up(md) {
+    #page-login-index {
+        .login-container {
+            max-width: 100%;
+            width: 100% !important; /* stylelint-disable-line declaration-no-important */
+        }
+    }
+
+    .login-container {
+        width: 100% !important; /* stylelint-disable-line declaration-no-important */
+    }
+}
+
+@include media-breakpoint-down(md) {
+    #page-login-index {
+        #page {
+            padding-top: 1rem;
+        }
+
+        .login-container {
+            .loginform {
+                .left-column {
+                    padding-right: 0;
+                }
+
+                .right-column {
+                    padding-left: 0;
+                    border-left: none;
+
+                    .column-content {
+                        display: block;
+
+                        .login-heading {
+                            margin-top: 1rem;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #page-login-signup #page-content {
+        padding-top: 15px;
+
+        .login-container {
+            max-width: 100%;
+            padding: 1rem;
+
+            .mform {
+                padding: 0;
+
+                #fgroup_id_buttonar {
+                    .col-md-9 {
+                        .d-flex.flex-wrap.align-items-center {
+                            flex-direction: column;
+
+                            #id_submitbutton {
+                                margin-bottom: 1rem;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

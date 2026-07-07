@@ -18,216 +18,27 @@
  * Custom moove extras functions
  *
  * @package    theme_moove
- * @copyright  2018 Willian Mano - http://conecti.me
+ * @copyright  2022 Willian Mano - http://conecti.me
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace theme_moove\util;
 
-use core_competency\api as competency_api;
-
-defined('MOODLE_INTERNAL') || die();
+use moodle_url;
 
 /**
  * Class to get some extras info in Moodle.
  *
  * @package    theme_moove
- * @copyright  2019 Willian Mano - http://conecti.me
+ * @copyright  2022 Willian Mano - http://conecti.me
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class extras {
     /**
-     * Returns all user enrolled courses with progress
-     *
-     * @param \stdClass $user
-     *
-     * @return array
-     */
-    public static function user_courses_with_progress($user) {
-        global $USER, $CFG;
-
-        if (($USER->id !== $user->id) && !is_siteadmin($USER->id)) {
-            return [];
-        }
-
-        require_once($CFG->dirroot.'/course/renderer.php');
-
-        $chelper = new \coursecat_helper();
-
-        $courses = enrol_get_users_courses($user->id, true, '*', 'visible DESC, fullname ASC, sortorder ASC');
-
-        foreach ($courses as $course) {
-            $course->fullname = strip_tags($chelper->get_course_formatted_name($course));
-
-            $courseobj = new \core_course_list_element($course);
-            $completion = new \completion_info($course);
-
-            // First, let's make sure completion is enabled.
-            if ($completion->is_enabled()) {
-                $percentage = \core_completion\progress::get_course_progress_percentage($course, $user->id);
-
-                if (!is_null($percentage)) {
-                    $percentage = floor($percentage);
-                }
-
-                if (is_null($percentage)) {
-                    $percentage = 0;
-                }
-
-                // Add completion data in course object.
-                $course->completed = $completion->is_course_complete($user->id);
-                $course->progress  = $percentage;
-            }
-
-            $course->link = $CFG->wwwroot."/course/view.php?id=".$course->id;
-
-            // Summary.
-            $course->summary = strip_tags($chelper->get_course_formatted_summary(
-                $courseobj,
-                array('overflowdiv' => false, 'noclean' => false, 'para' => false)
-            ));
-
-            $course->courseimage = self::get_course_summary_image($courseobj, $course->link);
-        }
-
-        return array_values($courses);
-    }
-
-    /**
-     * Returns the first course's summary issue
-     *
-     * @param \core_course_list_element $course
-     * @param string $courselink
-     *
-     * @return string
-     */
-    public static function get_course_summary_image($course, $courselink) {
-        global $CFG;
-
-        $contentimage = '';
-        foreach ($course->get_course_overviewfiles() as $file) {
-            $isimage = $file->is_valid_image();
-            $url = file_encode_url("$CFG->wwwroot/pluginfile.php",
-                '/'. $file->get_contextid(). '/'. $file->get_component(). '/'.
-                $file->get_filearea(). $file->get_filepath(). $file->get_filename(), !$isimage);
-            if ($isimage) {
-                $contentimage = \html_writer::link($courselink, \html_writer::empty_tag('img', array(
-                    'src' => $url,
-                    'alt' => $course->fullname,
-                    'class' => 'card-img-top w-100')));
-                break;
-            }
-        }
-
-        if (empty($contentimage)) {
-            $url = $CFG->wwwroot . "/theme/moove/pix/default_course.jpg";
-
-            $contentimage = \html_writer::link($courselink, \html_writer::empty_tag('img', array(
-                'src' => $url,
-                'alt' => $course->fullname,
-                'class' => 'card-img-top w-100')));
-        }
-
-        return $contentimage;
-    }
-
-    /**
-     * Returns the user picture
-     *
-     * @param null $userobject
-     * @param int $imgsize
-     *
-     * @return \moodle_url
-     * @throws \coding_exception
-     */
-    public static function get_user_picture($userobject = null, $imgsize = 100) {
-        global $USER, $PAGE;
-
-        if (!$userobject) {
-            $userobject = $USER;
-        }
-
-        $userimg = new \user_picture($userobject);
-
-        $userimg->size = $imgsize;
-
-        return $userimg->get_url($PAGE);
-    }
-
-    /**
-     * Returns an array of all user competency plans
-     *
-     * @param \stdClass $user
-     *
-     * @return array
-     *
-     * @throws \coding_exception
-     * @throws \required_capability_exception
-     */
-    public static function get_user_competency_plans($user) {
-        global $USER;
-
-        if (($USER->id !== $user->id) && !is_siteadmin($USER->id)) {
-            return [];
-        }
-
-        $retorno = [];
-
-        try {
-            $plans = array_values(competency_api::list_user_plans($user->id));
-
-            if (empty($plans)) {
-                return [];
-            }
-
-            foreach ($plans as $plan) {
-                $pclist = competency_api::list_plan_competencies($plan);
-
-                $ucproperty = 'usercompetency';
-                if ($plan->get('status') != 1) {
-                    $ucproperty = 'usercompetencyplan';
-                }
-
-                $proficientcount = 0;
-                foreach ($pclist as $pc) {
-                    $usercomp = $pc->$ucproperty;
-
-                    if ($usercomp->get('proficiency')) {
-                        $proficientcount++;
-                    }
-                }
-
-                $proficientcompetencypercentage = 0;
-                $competencycount = count($pclist);
-                if ($competencycount) {
-                    $proficientcompetencypercentage = ((float) $proficientcount / (float) $competencycount) * 100.0;
-                }
-
-                $progressclass = '';
-                if ($proficientcompetencypercentage == 100) {
-                    $progressclass = 'bg-success';
-                }
-
-                $retorno[] = [
-                    'id' => $plan->get('id'),
-                    'name' => $plan->get('name'),
-                    'competencycount' => $competencycount,
-                    'proficientcount' => $proficientcount,
-                    'proficientcompetencypercentage' => $proficientcompetencypercentage,
-                    'progressclass' => $progressclass
-                ];
-            }
-        } catch (\Exception $e) {
-            return [];
-        }
-
-        return $retorno;
-    }
-
-    /**
      * Returns the buttons displayed at the page header
      *
-     * @param \context_course $context
+     * @param \core\context\course $context
+     * @param int $courseid
      * @param \stdClass $user
      *
      * @return array
@@ -235,7 +46,7 @@ class extras {
      * @throws \coding_exception
      * @throws \moodle_exception
      */
-    public static function get_mypublic_headerbuttons($context, $user) {
+    public static function get_mypublic_headerbuttons($context, $courseid, $user): array {
         global $USER, $CFG;
 
         $headerbuttons = [];
@@ -245,31 +56,130 @@ class extras {
             $iscontact = !empty(\core_message\api::get_contact($USER->id, $user->id)) ? 1 : 0;
             $contacttitle = $iscontact ? 'removecontact' : 'addcontact';
             $contacturlaction = $iscontact ? 'removecontact' : 'addcontact';
-            $contactimage = $iscontact ? 'slicon-user-unfollow' : 'slicon-user-follow';
+            $contactimage = $iscontact ? 'fa fa-user-times' : 'fa fa-address-card';
             $headerbuttons = [
                 [
                     'title' => get_string('sendmessage', 'core_message'),
-                    'url' => new \moodle_url('/message/index.php', array('id' => $user->id)),
+                    'url' => new \moodle_url('/message/index.php', ['id' => $user->id]),
                     'icon' => 'fa fa-comment-o',
-                    'class' => 'btn btn-block btn-outline-primary'
+                    'class' => 'btn-header btn btn-sm btn-success',
                 ],
                 [
                     'title' => get_string($contacttitle, 'theme_moove'),
                     'url' => new \moodle_url('/message/index.php', [
-                            'user1' => $USER->id,
-                            'user2' => $user->id,
-                            $contacturlaction => $user->id,
-                            'sesskey' => sesskey()]
-                    ),
+                        'user1' => $USER->id,
+                        'user2' => $user->id,
+                        $contacturlaction => $user->id,
+                        'sesskey' => sesskey(),
+                    ]),
                     'icon' => $contactimage,
-                    'class' => 'btn btn-block btn-outline-dark ajax-contact-button',
+                    'class' => 'btn-header btn btn-sm btn-dark ajax-contact-button',
                     'linkattributes' => \core_message\helper::togglecontact_link_params($user, $iscontact),
-                ]
+                ],
             ];
 
             \core_message\helper::togglecontact_requirejs();
+            \core_message\helper::messageuser_requirejs();
         }
 
+        array_push($headerbuttons, self::get_local_mail_mypublic_headerbuttons($courseid, $user->id));
+
         return $headerbuttons;
+    }
+
+    /**
+     * Returns local_mail plugin button.
+     *
+     * @param int $courseid
+     * @param int $userid
+     *
+     * @return array
+     *
+     * @throws \coding_exception
+     * @throws \moodle_exception
+     */
+    public static function get_local_mail_mypublic_headerbuttons($courseid, $userid) {
+        global $CFG;
+
+        if ($courseid == 1 || !file_exists($CFG->dirroot . '/local/mail/lib.php')) {
+            return [];
+        }
+
+        return [
+            'title' => get_string('sendmail', 'local_mail'),
+            'url' => new \moodle_url('/local/mail/create.php', [
+                'course' => $courseid,
+                'recipients' => $userid,
+                'role' => 'to',
+                'sesskey' => sesskey(),
+            ]),
+            'icon' => 'fa fa-fw fa-envelope-o',
+            'class' => 'btn-header btn btn-sm btn-primary',
+        ];
+    }
+
+    /**
+     * Returns edit profile url
+     *
+     * @param \stdClass $user
+     * @param int $courseid
+     *
+     * @return false|moodle_url
+     *
+     * @throws \coding_exception
+     * @throws \dml_exception
+     * @throws \moodle_exception
+     */
+    public static function get_mypublic_editprofile_url($user, $courseid = 1) {
+        global $USER;
+
+        $iscurrentuser = $user->id == $USER->id;
+
+        $systemcontext = \core\context\system::instance();
+        $usercontext = \core\context\user::instance($USER->id);
+
+        // Edit profile.
+        if (isloggedin() && !isguestuser($user) && !is_mnet_remote_user($user)) {
+            if (
+                ($iscurrentuser || is_siteadmin($USER) || !is_siteadmin($user)) &&
+                has_capability('moodle/user:update', $systemcontext)
+            ) {
+                return new moodle_url(
+                    '/user/editadvanced.php',
+                    [
+                        'id' => $user->id,
+                        'course' => $courseid,
+                        'returnto' => 'profile',
+                    ]
+                );
+            }
+
+            if (
+                (has_capability('moodle/user:editprofile', $usercontext) && !is_siteadmin($user)) ||
+                ($iscurrentuser && has_capability('moodle/user:editownprofile', $systemcontext))
+            ) {
+                $userauthplugin = false;
+                if (!empty($user->auth)) {
+                    $userauthplugin = get_auth_plugin($user->auth);
+                }
+
+                if ($userauthplugin && $userauthplugin->can_edit_profile()) {
+                    $url = $userauthplugin->edit_profile_url();
+                    if (empty($url)) {
+                        if (empty($course)) {
+                            return new moodle_url('/user/edit.php', ['id' => $user->id, 'returnto' => 'profile']);
+                        }
+
+                        return new moodle_url('/user/edit.php', [
+                            'id' => $user->id,
+                            'course' => $course->id,
+                            'returnto' => 'profile',
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }

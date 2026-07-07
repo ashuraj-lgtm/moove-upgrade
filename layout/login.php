@@ -17,24 +17,19 @@
 /**
  * A login page layout for the boost theme.
  *
- * @package   theme_moove
- * @copyright 2017 Willian Mano - http://conecti.me
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    theme_moove
+ * @copyright  2025 Willian Mano - willianmanoaraujo@gmail.com
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$extraclasses[] = 'moove-login';
-$bodyattributes = $OUTPUT->body_attributes($extraclasses);
+$bodyattributes = $OUTPUT->body_attributes();
 
 $templatecontext = [
-    'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
+    'sitename' => format_string($SITE->shortname, true, ['context' => \core\context\course::instance(SITEID), "escape" => false]),
     'output' => $OUTPUT,
-    'bodyattributes' => $bodyattributes
+    'bodyattributes' => $bodyattributes,
 ];
-
-if ($this->page->pagetype == 'login-signup') {
-    $templatecontext['logourl'] = $OUTPUT->get_logo();
-}
 
 echo $OUTPUT->render_from_template('theme_moove/login', $templatecontext);

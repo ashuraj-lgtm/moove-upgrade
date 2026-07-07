@@ -13,7 +13,6 @@ $fontsize-inc-5: $font-size-base + 0.5rem;
 $fontsize-inc-6: $font-size-base + 0.6rem;
 
 $accessibility-sizes: () !default;
-// stylelint-disable-next-line scss/dollar-variable-default
 $accessibility-sizes: map-merge(
                 (
                         "fontsize-dec-1":  $fontsize-dec-1,
@@ -45,6 +44,10 @@ $accessibility-sizes: map-merge(
 }
 
 body {
+    &.odafont {
+        font-family: oda, comic sans ms, clfallback, Verdana;
+    }
+
     &.pagelayout-incourse {
         #region-main a:not(.btn),
         .section-navigation > a:not(.btn) {
@@ -92,7 +95,7 @@ body {
             background-image: none !important;
         }
 
-        *:not([class*="mce"]):not([id*="mce"]):not([id*="editor"]) {
+        *:not([class*="mce"]):not([id*="mce"]):not([id*="editor"]):not([class*="card-img"]):not([class*="activityicon"]) {
             /* it works well only with * selector but mce editor gets unusable */
             background-color: #ffffcc !important;
             background-image: none !important;
@@ -154,7 +157,7 @@ body {
             background-image: none !important;
         }
 
-        *:not([class*="mce"]):not([id*="mce"]):not([id*="editor"]){
+        *:not([class*="mce"]):not([id*="mce"]):not([id*="editor"]):not([class*="card-img"]):not([class*="activityicon"]) {
             /* it works well only with * selector but mce editor gets unusable */
             background-color: #99ccff !important;
             background-image: none !important;
@@ -216,7 +219,7 @@ body {
             background-image: none !important;
         }
 
-        *:not([class*="mce"]):not([id*="mce"]):not([id*="editor"]){
+        *:not([class*="mce"]):not([id*="mce"]):not([id*="editor"]):not([class*="card-img"]):not([class*="activityicon"]) {
             /* it works well only with * selector but mce editor gets unusable */
             background-color: #000000 !important;
             background-image: none !important;

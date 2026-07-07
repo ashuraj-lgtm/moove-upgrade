@@ -18,24 +18,22 @@
  * Accessibility API endpoints
  *
  * @package    theme_moove
- * @copyright  2020 Willian Mano - http://conecti.me
+ * @copyright  2022 Willian Mano {@link https://conecti.me}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace theme_moove\api;
 
-defined('MOODLE_INTERNAL') || die;
-
-use external_api;
-use external_function_parameters;
-use external_single_structure;
-use external_value;
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
 
 /**
  * Accessibility API endpoints class
  *
  * @package    theme_moove
- * @copyright  2020 Willian Mano - http://conecti.me
+ * @copyright  2022 Willian Mano {@link https://conecti.me}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class accessibility extends external_api {
@@ -159,7 +157,7 @@ class accessibility extends external_api {
      */
     public static function fontsize_returns() {
         return new external_single_structure([
-            'newfontsizeclass' => new external_value(PARAM_RAW, 'The new fontsize class')
+            'newfontsizeclass' => new external_value(PARAM_RAW, 'The new fontsize class'),
         ]);
     }
 
@@ -209,7 +207,7 @@ class accessibility extends external_api {
      */
     public static function sitecolor_returns() {
         return new external_single_structure([
-            'success' => new external_value(PARAM_BOOL, 'Operation response')
+            'success' => new external_value(PARAM_BOOL, 'Operation response'),
         ]);
     }
 
@@ -251,13 +249,13 @@ class accessibility extends external_api {
         }
 
         $enableaccessibilitytoolbar = null;
-        if ($data['enableaccessibilitytoolbar']) {
+        if (isset($data['enableaccessibilitytoolbar'])) {
             $enableaccessibilitytoolbar = true;
         }
 
         set_user_preference('thememoovesettings_enableaccessibilitytoolbar', $enableaccessibilitytoolbar);
 
-        \core\notification::success(get_string('themesettinggsavedsuccessfully', 'theme_moove'));
+        \core\notification::success(get_string('themesettingg:successfullysaved', 'theme_moove'));
 
         return ['success' => true];
     }
@@ -269,7 +267,7 @@ class accessibility extends external_api {
      */
     public static function savethemesettings_returns() {
         return new external_single_structure([
-            'success' => new external_value(PARAM_BOOL, 'Operation response')
+            'success' => new external_value(PARAM_BOOL, 'Operation response'),
         ]);
     }
 
@@ -292,7 +290,7 @@ class accessibility extends external_api {
     public static function getthemesettings() {
         return [
             'fonttype' => get_user_preferences('thememoovesettings_fonttype', 'default'),
-            'enableaccessibilitytoolbar' => get_user_preferences('thememoovesettings_enableaccessibilitytoolbar', false)
+            'enableaccessibilitytoolbar' => get_user_preferences('thememoovesettings_enableaccessibilitytoolbar', false),
         ];
     }
 
@@ -304,7 +302,7 @@ class accessibility extends external_api {
     public static function getthemesettings_returns() {
         return new external_single_structure([
             'fonttype' => new external_value(PARAM_TEXT, 'the user selected font'),
-            'enableaccessibilitytoolbar' => new external_value(PARAM_BOOL, 'the user selected toolbar option')
+            'enableaccessibilitytoolbar' => new external_value(PARAM_BOOL, 'the user selected toolbar option'),
         ]);
     }
 }

@@ -1,90 +1,45 @@
-#page-my-index {
-    .admininfos {
-        padding-bottom: 0;
+.pagelayout-mydashboard {
+    .card {
+        -webkit-box-shadow: none;
+        box-shadow: none;
+        border-radius: .5rem;
+    }
 
-        .breadcrumb-button {
-            margin-right: 0 !important;
+    #block-region-content {
+        .dashboard-card-deck:not(.fixed-width-cards) .dashboard-card {
+            width: calc(33.33% - 2rem);
+            margin: 1rem;
         }
     }
 
-    .bg-1 {
-        background-color: #1e88e5;
+    &#page-message-index {
+        #topofscroll {
+            margin-top: 2rem !important;
+        }
     }
+}
 
-    .bg-2 {
-        background-color: #7460ee;
-    }
-
-    .bg-3 {
-        background-color: #26c6da;
-    }
-
-    .bg-4 {
-        background-color: #2f3d4a;
-    }
-
-    .small-box {
-        border-radius: $card-border-radius;
-        position: relative;
-        display: block;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-    }
-
-    .small-box > .inner {
-        padding: 10px;
-    }
-
-    .small-box h3,
-    .small-box p {
-        z-index: 5;
-        color: #fff;
-    }
-
-    .small-box h3 {
-        margin: 0 0 10px 0;
-        white-space: nowrap;
-        padding: 0;
-    }
-
-    .small-box .icon {
-        -webkit-transition: all .3s linear;
-        -o-transition: all .3s linear;
-        transition: all .3s linear;
-        position: absolute;
-        top: 0;
-        right: 40px;
-        z-index: 0;
-        font-size: 48px;
-        color: rgba(0, 0, 0, 0.15);
-    }
-
-    .progress-chart-container .no-progress {
+#page-my-index.page-mycourses {
+    .header-actions-container .header-action .btn-group > .btn:not(:last-child):not(.dropdown-toggle) {
         background-color: $brand-primary;
 
-        .fa {
-            color: #fff;
-            font-size: 42px;
-            padding: 14px 8px;
+        &:hover {
+            background-color: darken($brand-primary, 10%);
+        }
+
+        .text-dark {
+            color: #fff !important;
         }
     }
+}
 
-    #region-main-box #region-main {
-        .card:not([class*="dashboard-card"]) {
-            border-top: solid 2px $brand-primary;
-        }
-
-        .card.mymaincontent {
-            border: none;
-            background-color: initial;
-
-            > .card-body {
-                padding: 0;
+@include media-breakpoint-down(md) {
+    .pagelayout-mydashboard {
+        #block-region-content {
+            .dashboard-card-deck:not(.fixed-width-cards) .dashboard-card {
+                width: calc(100%);
+                margin: 1rem 0;
             }
-        }
-
-        .block .block-cards .progress {
-            margin-left: 0;
         }
     }
 }

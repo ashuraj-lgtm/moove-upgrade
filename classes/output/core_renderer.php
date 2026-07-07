@@ -18,191 +18,128 @@
  * Overriden theme boost core renderer.
  *
  * @package    theme_moove
- * @copyright  2017 Willian Mano - http://conecti.me
+ * @copyright  2022 Willian Mano {@link https://conecti.me}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace theme_moove\output;
 
-use html_writer;
-use custom_menu;
-use action_menu_filler;
-use action_menu_link_secondary;
-use stdClass;
-use moodle_url;
-use action_menu;
-use pix_icon;
 use theme_config;
-use core_text;
-use help_icon;
-use context_system;
-use core_course_list_element;
-
-defined('MOODLE_INTERNAL') || die;
+use core\context\course as context_course;
+use moodle_url;
+use html_writer;
+use theme_moove\output\core_course\activity_navigation;
+use theme_moove\util\settings;
 
 /**
  * Renderers to align Moodle's HTML with that expected by Bootstrap
  *
  * @package    theme_moove
- * @copyright  2017 Willian Mano - http://conecti.me
+ * @copyright  2022 Willian Mano {@link https://conecti.me}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class core_renderer extends \theme_boost\output\core_renderer {
-
     /**
-     * Renders the custom menu
+     * The standard tags (meta tags, links to stylesheets and JavaScript, etc.)
+     * that should be included in the <head> tag. Designed to be called in theme
+     * layout.php files.
      *
-     * @param custom_menu $menu
-     * @return mixed
+     * @return string HTML fragment.
      */
-    protected function render_custom_menu(custom_menu $menu) {
-        if (!$menu->has_children()) {
-            return '';
+    public function standard_head_html() {
+        $output = parent::standard_head_html();
+
+        $googleanalyticscode = "<script
+                                    async
+                                    src='https://www.googletagmanager.com/gtag/js?id=GOOGLE-ANALYTICS-CODE'>
+                                </script>
+                                <script>
+                                    window.dataLayer = window.dataLayer || [];
+                                    function gtag() {
+                                        dataLayer.push(arguments);
+                                    }
+                                    gtag('js', new Date());
+                                    gtag('config', 'GOOGLE-ANALYTICS-CODE');
+                                </script>";
+
+        $theme = theme_config::load('moove');
+
+        if (!empty($theme->settings->googleanalytics)) {
+            $output .= str_replace("GOOGLE-ANALYTICS-CODE", trim($theme->settings->googleanalytics), $googleanalyticscode);
         }
 
-        $content = '';
-        foreach ($menu->get_children() as $item) {
-            $context = $item->export_for_template($this);
-            $content .= $this->render_from_template('core/custom_menu_item', $context);
+        $sitefont = isset($theme->settings->fontsite) ? $theme->settings->fontsite : 'Moodle';
+
+        if ($sitefont != 'Moodle') {
+            $output .= '<link rel="preconnect" href="https://fonts.googleapis.com">
+                       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                       <link href="https://fonts.googleapis.com/css2?family='
+                . $sitefont .
+                ':ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">';
         }
 
-        return $content;
+        return $output;
     }
 
     /**
-     * Renders the lang menu
+     * Returns HTML attributes to use within the body tag. This includes an ID and classes.
      *
-     * @return mixed
-     */
-    public function render_lang_menu() {
-        $langs = get_string_manager()->get_list_of_translations();
-        $haslangmenu = $this->lang_menu() != '';
-        $menu = new custom_menu;
-
-        if ($haslangmenu) {
-            $strlang = get_string('language');
-            $currentlang = current_language();
-            if (isset($langs[$currentlang])) {
-                $currentlang = $langs[$currentlang];
-            } else {
-                $currentlang = $strlang;
-            }
-            $this->language = $menu->add($currentlang, new moodle_url('#'), $strlang, 10000);
-            foreach ($langs as $langtype => $langname) {
-                $this->language->add($langname, new moodle_url($this->page->url, array('lang' => $langtype)), $langname);
-            }
-
-            foreach ($menu->get_children() as $item) {
-                $context = $item->export_for_template($this);
-            }
-
-            if (isset($context)) {
-                return $this->render_from_template('theme_moove/lang_menu', $context);
-            }
-        }
-    }
-
-    /**
-     * Wrapper for header elements.
+     * @param string|array $additionalclasses Any additional classes to give the body tag,
      *
-     * @return string HTML to display the main header.
-     */
-    public function mydashboard_admin_header() {
-        $html = html_writer::start_div('row');
-        $html .= html_writer::start_div('col-xs-12 p-a-1');
-
-        $pageheadingbutton = $this->page_heading_button();
-        if (empty($this->page->layout_options['nonavbar'])) {
-            $html .= html_writer::start_div('clearfix w-100 pull-xs-left', array('id' => 'page-navbar'));
-            $html .= html_writer::tag('div', $this->navbar(), array('class' => 'breadcrumb-nav'));
-            $html .= html_writer::div($pageheadingbutton, 'breadcrumb-button');
-            $html .= html_writer::end_div();
-        } else if ($pageheadingbutton) {
-            $html .= html_writer::div($pageheadingbutton, 'breadcrumb-button nonavbar pull-xs-right m-r-1');
-        }
-
-        $html .= html_writer::end_div(); // End .row.
-        $html .= html_writer::end_div(); // End .col-xs-12.
-
-        return $html;
-    }
-
-    /**
-     * Renders the login form.
-     *
-     * @param \core_auth\output\login $form The renderable.
      * @return string
+     *
+     * @throws \coding_exception
+     *
+     * @since Moodle 2.5.1 2.6
      */
-    public function render_login(\core_auth\output\login $form) {
-        global $CFG, $SITE;
+    public function body_attributes($additionalclasses = []) {
+        $hasaccessibilitybar = get_user_preferences('thememoovesettings_enableaccessibilitytoolbar', '');
+        if ($hasaccessibilitybar) {
+            $additionalclasses[] = 'hasaccessibilitybar';
 
-        $context = $form->export_for_template($this);
+            $currentfontsizeclass = get_user_preferences('accessibilitystyles_fontsizeclass', '');
+            if ($currentfontsizeclass) {
+                $additionalclasses[] = $currentfontsizeclass;
+            }
 
-        // Override because rendering is not supported in template yet.
-        if ($CFG->rememberusername == 0) {
-            $context->cookieshelpiconformatted = $this->help_icon('cookiesenabledonlysession');
-        } else {
-            $context->cookieshelpiconformatted = $this->help_icon('cookiesenabled');
+            $currentsitecolorclass = get_user_preferences('accessibilitystyles_sitecolorclass', '');
+            if ($currentsitecolorclass) {
+                $additionalclasses[] = $currentsitecolorclass;
+            }
         }
-        $context->errorformatted = $this->error_text($context->error);
 
-        $context->logourl = $this->get_logo();
+        $fonttype = get_user_preferences('thememoovesettings_fonttype', '');
+        if ($fonttype) {
+            $additionalclasses[] = $fonttype;
+        }
 
-        $context->sitename = format_string($SITE->fullname, true,
-            ['context' => \context_course::instance(SITEID), "escape" => false]);
+        $colormode = 'light';
 
-        return $this->render_from_template('core/loginform', $context);
+        $settings = new settings();
+        $darkmode = get_user_preferences('dark-mode-on', '');
+        if ($settings->enabledarkmode && $darkmode) {
+            $additionalclasses[] = 'moove-darkmode';
+            $colormode = 'dark';
+        }
+
+        if (!is_array($additionalclasses)) {
+            $additionalclasses = explode(' ', $additionalclasses);
+        }
+
+        return " id='{$this->body_id()}' class='{$this->body_css_classes($additionalclasses)}' data-bs-theme='{$colormode}' ";
     }
 
     /**
-     * Render the login signup form into a nice template for the theme.
+     * Whether we should display the main theme or site logo in the navbar.
      *
-     * @param mform $form
-     * @return string
+     * @return bool
      */
-    public function render_login_signup_form($form) {
-        global $SITE;
-
-        $context = $form->export_for_template($this);
-
-        $context['logourl'] = $this->get_logo();
-
-        $context['sitename'] = format_string($SITE->fullname, true,
-            ['context' => \context_course::instance(SITEID), "escape" => false]);
-
-        return $this->render_from_template('core/signup_form_layout', $context);
-    }
-
-    /**
-     * Gets the logo to be rendered.
-     *
-     * The priority of get log is: 1st try to get the theme logo, 2st try to get the theme logo
-     * If no logo was found return false
-     *
-     * @return mixed
-     */
-    public function get_logo() {
-        if ($this->should_display_theme_logo()) {
-            return $this->get_theme_logo_url();
-        }
-
-        $url = $this->get_logo_url();
-        if ($url) {
-            return $url->out(false);
+    public function should_display_logo() {
+        if ($this->should_display_theme_logo() || parent::should_display_navbar_logo()) {
+            return true;
         }
 
         return false;
-    }
-
-    /**
-     * Outputs the pix url base
-     *
-     * @return string an URL.
-     */
-    public function get_pix_image_url_base() {
-        global $CFG;
-
-        return $CFG->wwwroot . "/theme/moove/pix";
     }
 
     /**
@@ -214,6 +151,152 @@ class core_renderer extends \theme_boost\output\core_renderer {
         $logo = $this->get_theme_logo_url();
 
         return !empty($logo);
+    }
+
+    /**
+     * Get the main logo URL.
+     *
+     * @return string
+     */
+    public function get_logo() {
+        $logo = $this->get_theme_logo_url();
+
+        if ($logo) {
+            return $logo;
+        }
+
+        $logo = $this->get_logo_url();
+
+        if ($logo) {
+            return $logo->out(false);
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the main logo URL.
+     *
+     * @return string
+     */
+    public function get_logo_dark() {
+        $logo = $this->get_theme_logo_dark_url();
+
+        if ($logo) {
+            return $logo;
+        }
+
+        return $this->get_logo();
+    }
+
+    /**
+     * Get the main logo URL.
+     *
+     * @return string
+     */
+    public function get_theme_logo_url() {
+        $theme = theme_config::load('moove');
+
+        return $theme->setting_file_url('logo', 'logo');
+    }
+
+    /**
+     * Get the main dark logo URL.
+     *
+     * @return string
+     */
+    public function get_theme_logo_dark_url() {
+        $theme = theme_config::load('moove');
+
+        return $theme->setting_file_url('logodark', 'logodark');
+    }
+
+    /**
+     * Renders the login form.
+     *
+     * @param \core_auth\output\login $form The renderable.
+     * @return string
+     */
+    public function render_login(\core_auth\output\login $form) {
+        global $SITE, $CFG;
+
+        $context = $form->export_for_template($this);
+
+        $context->errorformatted = $this->error_text($context->error);
+        $context->logourl = $this->get_logo();
+        $context->sitename = format_string(
+            $SITE->fullname,
+            true,
+            ['context' => context_course::instance(SITEID), "escape" => false]
+        );
+
+        if (!$CFG->auth_instructions) {
+            $context->instructions = null;
+            $context->hasinstructions = false;
+        }
+
+        $context->hastwocolumns = false;
+        if ($CFG->auth_instructions) {
+            $context->hastwocolumns = true;
+        }
+
+        if ($context->identityproviders) {
+            foreach ($context->identityproviders as $key => $provider) {
+                $isfacebook = false;
+
+                if (!empty($provider['iconurl']) && strpos($provider['iconurl'], 'facebook') !== false) {
+                    $isfacebook = true;
+                }
+
+                $context->identityproviders[$key]['isfacebook'] = $isfacebook;
+            }
+        }
+
+        return $this->render_from_template('core/loginform', $context);
+    }
+
+    /**
+     * Returns the HTML for the site support email link
+     *
+     * @param array $customattribs Array of custom attributes for the support email anchor tag.
+     * @param bool $embed Set to true if you want to embed the link in other inline content.
+     * @return string The html code for the support email link.
+     */
+    public function supportemail(array $customattribs = [], bool $embed = false): string {
+        global $CFG;
+
+        // Do not provide a link to contact site support if it is unavailable to this user. This would be where the site has
+        // disabled support, or limited it to authenticated users and the current user is a guest or not logged in.
+        if (
+            !isset($CFG->supportavailability) ||
+            $CFG->supportavailability == CONTACT_SUPPORT_DISABLED ||
+            ($CFG->supportavailability == CONTACT_SUPPORT_AUTHENTICATED && (!isloggedin() || isguestuser()))
+        ) {
+            return '';
+        }
+
+        $label = get_string('contactsitesupport', 'admin');
+        $icon = $this->pix_icon('t/life-ring', '', 'moodle', ['class' => 'iconhelp icon-pre']);
+        $content = $icon . $label;
+
+        if ($embed) {
+            $content = $label;
+        }
+
+        if (!empty($CFG->supportpage)) {
+            $attributes = ['href' => $CFG->supportpage, 'target' => 'blank', 'class' => 'btn contactsitesupport btn-outline-info'];
+
+            $content .= $this->pix_icon('i/externallink', '', 'moodle', ['class' => 'ml-1']);
+        } else {
+            $attributes = [
+                'href' => $CFG->wwwroot . '/user/contactsitesupport.php',
+                'class' => 'btn contactsitesupport btn-outline-info',
+            ];
+        }
+
+        $attributes += $customattribs;
+
+        return html_writer::tag('a', $content, $attributes);
     }
 
     /**
@@ -240,613 +323,248 @@ class core_renderer extends \theme_boost\output\core_renderer {
     }
 
     /**
-     * Get the main logo URL.
+     * Returns standard navigation between activities in a course.
      *
-     * @return string
+     * @return string the navigation HTML.
      */
-    public function get_theme_logo_url() {
-        $theme = theme_config::load('moove');
-
-        return $theme->setting_file_url('logo', 'logo');
-    }
-
-    /**
-     * Return the site identity providers
-     *
-     * @return mixed
-     */
-    public function get_identity_providers() {
-        global $CFG;
-
-        $authsequence = get_enabled_auth_plugins(true);
-
-        require_once($CFG->libdir . '/authlib.php');
-
-        $identityproviders = \auth_plugin_base::get_identity_providers($authsequence);
-
-        return $identityproviders;
-    }
-
-    /**
-     * Verify whether the site has identity providers
-     *
-     * @return mixed
-     */
-    public function has_identity_providers() {
-        global $CFG;
-
-        $authsequence = get_enabled_auth_plugins(true);
-
-        require_once($CFG->libdir . '/authlib.php');
-
-        $identityproviders = \auth_plugin_base::get_identity_providers($authsequence);
-
-        return !empty($identityproviders);
-    }
-
-    /**
-     * Construct a user menu, returning HTML that can be echoed out by a
-     * layout file.
-     *
-     * @param stdClass $user A user object, usually $USER.
-     * @param bool $withlinks true if a dropdown should be built.
-     * @return string HTML fragment.
-     */
-    public function user_menu($user = null, $withlinks = null) {
-        global $USER, $CFG;
-        require_once($CFG->dirroot . '/user/lib.php');
-
-        if (is_null($user)) {
-            $user = $USER;
-        }
-
-        // Note: this behaviour is intended to match that of core_renderer::login_info,
-        // but should not be considered to be good practice; layout options are
-        // intended to be theme-specific. Please don't copy this snippet anywhere else.
-        if (is_null($withlinks)) {
-            $withlinks = empty($this->page->layout_options['nologinlinks']);
-        }
-
-        // Add a class for when $withlinks is false.
-        $usermenuclasses = 'usermenu';
-        if (!$withlinks) {
-            $usermenuclasses .= ' withoutlinks';
-        }
-
-        $returnstr = "";
-
-        // If during initial install, return the empty return string.
-        if (during_initial_install()) {
-            return $returnstr;
-        }
-
-        $loginpage = $this->is_login_page();
-        $loginurl = get_login_url();
-        // If not logged in, show the typical not-logged-in string.
-        if (!isloggedin()) {
-            $returnstr = '';
-            if (!$loginpage) {
-                $returnstr .= "<a class='btn btn-login-top' href=\"$loginurl\">" . get_string('login') . '</a>';
-            }
-
-            $theme = theme_config::load('moove');
-
-            if (!$theme->settings->disablefrontpageloginbox) {
-                return html_writer::tag(
-                    'li',
-                    html_writer::span(
-                        $returnstr,
-                        'login'
-                    ),
-                    array('class' => $usermenuclasses)
-                );
-            }
-
-            $context = [
-                'loginurl' => $loginurl,
-                'logintoken' => \core\session\manager::get_login_token(),
-                'canloginasguest' => $CFG->guestloginbutton and !isguestuser(),
-                'canloginbyemail' => !empty($CFG->authloginviaemail),
-                'cansignup' => $CFG->registerauth == 'email' || !empty($CFG->registerauth)
-
-            ];
-
-            return $this->render_from_template('theme_moove/frontpage_guest_loginbtn', $context);
-        }
-
-        // If logged in as a guest user, show a string to that effect.
-        if (isguestuser()) {
-            $returnstr = get_string('loggedinasguest');
-            if (!$loginpage && $withlinks) {
-                $returnstr .= " (<a href=\"$loginurl\">".get_string('login').'</a>)';
-            }
-
-            return html_writer::tag(
-                'li',
-                html_writer::span(
-                    $returnstr,
-                    'login'
-                ),
-                array('class' => $usermenuclasses)
-            );
-        }
-
-        // Get some navigation opts.
-        $opts = user_get_user_navigation_info($user, $this->page);
-
-        $avatarclasses = "avatars";
-        $avatarcontents = html_writer::span($opts->metadata['useravatar'], 'avatar current');
-        $usertextcontents = '';
-
-        // Other user.
-        if (!empty($opts->metadata['asotheruser'])) {
-            $avatarcontents .= html_writer::span(
-                $opts->metadata['realuseravatar'],
-                'avatar realuser'
-            );
-            $usertextcontents = $opts->metadata['realuserfullname'];
-            $usertextcontents .= html_writer::tag(
-                'span',
-                get_string(
-                    'loggedinas',
-                    'moodle',
-                    html_writer::span(
-                        $opts->metadata['userfullname'],
-                        'value'
-                    )
-                ),
-                array('class' => 'meta viewingas')
-            );
-        }
-
-        // Role.
-        if (!empty($opts->metadata['asotherrole'])) {
-            $role = core_text::strtolower(preg_replace('#[ ]+#', '-', trim($opts->metadata['rolename'])));
-            $usertextcontents .= html_writer::span(
-                $opts->metadata['rolename'],
-                'meta role role-' . $role
-            );
-        }
-
-        // User login failures.
-        if (!empty($opts->metadata['userloginfail'])) {
-            $usertextcontents .= html_writer::span(
-                $opts->metadata['userloginfail'],
-                'meta loginfailures'
-            );
-        }
-
-        // MNet.
-        if (!empty($opts->metadata['asmnetuser'])) {
-            $mnet = strtolower(preg_replace('#[ ]+#', '-', trim($opts->metadata['mnetidprovidername'])));
-            $usertextcontents .= html_writer::span(
-                $opts->metadata['mnetidprovidername'],
-                'meta mnet mnet-' . $mnet
-            );
-        }
-
-        $returnstr .= html_writer::span(
-            html_writer::span($usertextcontents, 'usertext') .
-            html_writer::span($avatarcontents, $avatarclasses),
-            'userbutton'
-        );
-
-        // Create a divider (well, a filler).
-        $divider = new action_menu_filler();
-        $divider->primary = false;
-
-        $actionmenu = new action_menu();
-        $actionmenu->set_menu_trigger(
-            $returnstr
-        );
-        $actionmenu->set_alignment(action_menu::TR, action_menu::BR);
-        $actionmenu->set_nowrap_on_items();
-        if ($withlinks) {
-            $navitemcount = count($opts->navitems);
-            $idx = 0;
-
-            // Adds username to the first item of usermanu.
-            $userinfo = new stdClass();
-            $userinfo->itemtype = 'text';
-            $userinfo->title = $user->firstname . ' ' . $user->lastname;
-            $userinfo->url = new moodle_url('/user/profile.php', array('id' => $user->id));
-            $userinfo->pix = 'i/user';
-
-            array_unshift($opts->navitems, $userinfo);
-
-            foreach ($opts->navitems as $value) {
-
-                switch ($value->itemtype) {
-                    case 'divider':
-                        // If the nav item is a divider, add one and skip link processing.
-                        $actionmenu->add($divider);
-                        break;
-
-                    case 'invalid':
-                        // Silently skip invalid entries (should we post a notification?).
-                        break;
-
-                    case 'text':
-                        $amls = new action_menu_link_secondary(
-                            $value->url,
-                            $pix = new pix_icon($value->pix, $value->title, null, array('class' => 'iconsmall')),
-                            $value->title,
-                            array('class' => 'text-username')
-                        );
-
-                        $actionmenu->add($amls);
-                        break;
-
-                    case 'link':
-                        // Process this as a link item.
-                        $pix = null;
-                        if (isset($value->pix) && !empty($value->pix)) {
-                            $pix = new pix_icon($value->pix, $value->title, null, array('class' => 'iconsmall'));
-                        } else if (isset($value->imgsrc) && !empty($value->imgsrc)) {
-                            $value->title = html_writer::img(
-                                $value->imgsrc,
-                                $value->title,
-                                array('class' => 'iconsmall')
-                            ) . $value->title;
-                        }
-
-                        $amls = new action_menu_link_secondary(
-                            $value->url,
-                            $pix,
-                            $value->title,
-                            array('class' => 'icon')
-                        );
-                        if (!empty($value->titleidentifier)) {
-                            $amls->attributes['data-title'] = $value->titleidentifier;
-                        }
-                        $actionmenu->add($amls);
-                        break;
-                }
-
-                $idx++;
-
-                // Add dividers after the first item and before the last item.
-                if ($idx == 1 || $idx == $navitemcount) {
-                    $actionmenu->add($divider);
-                }
-            }
-        }
-
-        return html_writer::tag(
-            'li',
-            $this->render($actionmenu),
-            array('class' => $usermenuclasses)
-        );
-    }
-
-    /**
-     * Secure login info.
-     *
-     * @return string
-     */
-    public function secure_login_info() {
-        return $this->login_info(false);
-    }
-
-    /**
-     * Implementation of user image rendering.
-     *
-     * @param help_icon $helpicon A help icon instance
-     * @return string HTML fragment
-     */
-    public function render_help_icon(help_icon $helpicon) {
-        $context = $helpicon->export_for_template($this);
-        // Solving the issue - "Your progress" help tooltip in course home page displays in outside the screen display.
-        // Check issue https://github.com/willianmano/moodle-theme_moove/issues/5.
-        if ($helpicon->identifier === 'completionicons' && $helpicon->component === 'completion') {
-            $context->ltr = right_to_left();
-        }
-
-        return $this->render_from_template('core/help_icon', $context);
-    }
-
-    /**
-     * Returns a search box.
-     *
-     * @param  string $identifier The search box wrapper div id, defaults to an autogenerated one.
-     * @return string HTML with the search form hidden by default.
-     */
-    public function search_box($identifier = false) {
-        global $CFG;
-
-        // Accessing $CFG directly as using \core_search::is_global_search_enabled would
-        // result in an extra included file for each site, even the ones where global search
-        // is disabled.
-        if (empty($CFG->enableglobalsearch) || !has_capability('moodle/search:query', context_system::instance())) {
+    public function activity_navigation() {
+        // First we should check if we want to add navigation.
+        $context = $this->page->context;
+        if (
+            ($this->page->pagelayout !== 'incourse' && $this->page->pagelayout !== 'frametop') ||
+            $context->contextlevel != CONTEXT_MODULE
+        ) {
             return '';
         }
 
-        if ($identifier == false) {
-            $identifier = uniqid();
-        } else {
-            // Needs to be cleaned, we use it for the input id.
-            $identifier = clean_param($identifier, PARAM_ALPHANUMEXT);
+        // If the activity is in stealth mode, show no links.
+        if ($this->page->cm->is_stealth()) {
+            return '';
         }
 
-        // JS to animate the form.
-        $this->page->requires->js_call_amd('core/search-input', 'init', array($identifier));
+        $course = $this->page->cm->get_course();
 
-        $iconattrs = array(
-                        'class' => 'slicon-magnifier',
-                        'title' => get_string('search', 'search'),
-                        'aria-label' => get_string('search', 'search'),
-                        'aria-hidden' => 'true');
-        $searchicon = html_writer::tag('i', '', $iconattrs);
+        // Get a list of all the activities in the course.
+        $modules = get_fast_modinfo($course->id)->get_cms();
 
-        $formattrs = array('class' => 'search-input-form', 'action' => $CFG->wwwroot . '/search/index.php');
-        $inputattrs = array('type' => 'text', 'name' => 'q', 'placeholder' => get_string('search', 'search'),
-            'size' => 13, 'tabindex' => -1, 'id' => 'id_q_' . $identifier, 'class' => 'form-control');
+        // Put the modules into an array in order by the position they are shown in the course.
+        $mods = [];
+        $activitylist = [];
+        foreach ($modules as $module) {
+            // Only add activities the user can access, aren't in stealth mode and have a url (eg. mod_label does not).
+            if (!$module->uservisible || $module->is_stealth() || empty($module->url)) {
+                continue;
+            }
+            $mods[$module->id] = $module;
 
-        $contents = html_writer::tag('label', get_string('enteryoursearchquery', 'search'),
-            array('for' => 'id_q_' . $identifier, 'class' => 'accesshide')) . html_writer::tag('input', '', $inputattrs);
+            // No need to add the current module to the list for the activity dropdown menu.
+            if ($module->id == $this->page->cm->id) {
+                continue;
+            }
+            // Module name.
+            $modname = $module->get_formatted_name();
+            // Display the hidden text if necessary.
+            if (!$module->visible) {
+                $modname .= ' ' . get_string('hiddenwithbrackets');
+            }
+            // Module URL.
+            $linkurl = new moodle_url($module->url, ['forceview' => 1]);
+            // Add module URL (as key) and name (as value) to the activity list array.
+            $activitylist[$linkurl->out(false)] = $modname;
+        }
 
-        $btnclose = '<a class="close-search"><i class="fa fa-times"></i></a>';
+        $nummods = count($mods);
 
-        $searchinput = html_writer::tag('form', $contents . $btnclose, $formattrs);
+        // If there is only one mod then do nothing.
+        if ($nummods == 1) {
+            return '';
+        }
 
-        return html_writer::tag('div',
-                                $searchicon . $searchinput,
-                                array('class' => 'moove-search-input nav-link', 'id' => $identifier));
+        // Get an array of just the course module ids used to get the cmid value based on their position in the course.
+        $modids = array_keys($mods);
+
+        // Get the position in the array of the course module we are viewing.
+        $position = array_search($this->page->cm->id, $modids);
+
+        $prevmod = null;
+        $nextmod = null;
+
+        // Check if we have a previous mod to show.
+        if ($position > 0) {
+            $prevmod = $mods[$modids[$position - 1]];
+        }
+
+        // Check if we have a next mod to show.
+        if ($position < ($nummods - 1)) {
+            $nextmod = $mods[$modids[$position + 1]];
+        }
+
+        $activitynav = new activity_navigation($prevmod, $nextmod, $activitylist);
+        $renderer = $this->page->get_renderer('core', 'course');
+
+        return $renderer->render($activitynav);
     }
 
     /**
-     * The standard tags (meta tags, links to stylesheets and JavaScript, etc.)
-     * that should be included in the <head> tag. Designed to be called in theme
-     * layout.php files.
+     * Returns plugins callback renderable data to be printed on navbar.
      *
-     * @return string HTML fragment.
+     * @return string Final html code.
      */
-    public function standard_head_html() {
-        $output = parent::standard_head_html();
+    public function get_navbar_callbacks_data() {
+        $callbacks = get_plugins_with_function('moove_additional_header', 'lib.php', true, true);
 
-        // Add google analytics code.
-        $googleanalyticscode = "<script>
-                                    window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};
-                                    ga.l=+new Date;ga('create', 'GOOGLE-ANALYTICS-CODE', 'auto');
-                                    ga('send', 'pageview');
-                                </script>
-                                <script async src='https://www.google-analytics.com/analytics.js'></script>";
+        if (!$callbacks) {
+            return '';
+        }
 
-        $theme = theme_config::load('moove');
+        $output = '';
 
-        if (!empty($theme->settings->googleanalytics)) {
-            $output .= str_replace("GOOGLE-ANALYTICS-CODE", trim($theme->settings->googleanalytics), $googleanalyticscode);
+        foreach ($callbacks as $plugins) {
+            foreach ($plugins as $pluginfunction) {
+                if (function_exists($pluginfunction)) {
+                    $output .= $pluginfunction();
+                }
+            }
         }
 
         return $output;
     }
 
     /**
-     * Try to return the first image on course summary files, otherwise returns a default image.
+     * Returns plugins callback renderable data to be printed on navbar.
      *
-     * @return string HTML fragment.
+     * @return string Final html code.
      */
-    public function courseheaderimage() {
-        global $CFG, $COURSE, $DB;
+    public function get_module_footer_callbacks_data() {
+        $callbacks = get_plugins_with_function('moove_module_footer', 'lib.php', true, true);
 
-        $course = $DB->get_record('course', ['id' => $COURSE->id]);
+        if (!$callbacks) {
+            return '';
+        }
 
-        $course = new core_course_list_element($course);
+        $output = '';
 
-        $courseimage = '';
-        $imageindex = 1;
-        foreach ($course->get_course_overviewfiles() as $file) {
-            $isimage = $file->is_valid_image();
-
-            $url = new moodle_url("$CFG->wwwroot/pluginfile.php" . '/'. $file->get_contextid(). '/'. $file->get_component(). '/'.
-                $file->get_filearea(). $file->get_filepath(). $file->get_filename(), ['forcedownload' => !$isimage]);
-
-            if ($isimage) {
-                $courseimage = $url;
+        foreach ($callbacks as $plugins) {
+            foreach ($plugins as $pluginfunction) {
+                if (function_exists($pluginfunction)) {
+                    $output .= $pluginfunction();
+                }
             }
+        }
 
-            if ($imageindex == 2) {
+        return $output;
+    }
+
+    /**
+     * Redirects the user by any means possible given the current state
+     *
+     * This function should not be called directly, it should always be called using
+     * the redirect function in lib/weblib.php
+     *
+     * The redirect function should really only be called before page output has started
+     * however it will allow itself to be called during the state STATE_IN_BODY
+     *
+     * @param string $encodedurl The URL to send to encoded if required
+     * @param string $message The message to display to the user if any
+     * @param int $delay The delay before redirecting a user, if $message has been
+     *         set this is a requirement and defaults to 3, set to 0 no delay
+     * @param boolean $debugdisableredirect this redirect has been disabled for
+     *         debugging purposes. Display a message that explains, and don't
+     *         trigger the redirect.
+     * @param string $messagetype The type of notification to show the message in.
+     *         See constants on \core\output\notification.
+     * @return string The HTML to display to the user before dying, may contain
+     *         meta refresh, javascript refresh, and may have set header redirects
+     */
+    public function redirect_message(
+        $encodedurl,
+        $message,
+        $delay,
+        $debugdisableredirect,
+        $messagetype = \core\output\notification::NOTIFY_INFO
+    ) {
+        $url = str_replace('&amp;', '&', $encodedurl);
+
+        switch ($this->page->state) {
+            case \moodle_page::STATE_BEFORE_HEADER:
+                // No output yet it is safe to delivery the full arsenal of redirect methods.
+                if (!$debugdisableredirect) {
+                    // Don't use exactly the same time here, it can cause problems when both redirects fire at the same time.
+                    $this->metarefreshtag = '<meta http-equiv="refresh" content="' . $delay . '; url=' . $encodedurl . '" />';
+                    $this->page->requires->js_function_call('document.location.replace', [$url], false, ($delay + 3));
+                }
+                $output = $this->header();
                 break;
-            }
-
-            $imageindex++;
-        }
-
-        if (empty($courseimage)) {
-            $courseimage = $this->get_pix_image_url_base() . "/default_coursesummary.jpg";
-        }
-
-        // Create html for header.
-        $html = html_writer::start_div('headerbkg');
-
-        $html .= html_writer::start_div('withimage', array(
-            'style' => 'background-image: url("' . $courseimage . '"); background-size: cover; background-position:center;
-            width: 100%; height: 100%;'
-        ));
-        $html .= html_writer::end_div(); // End withimage inline style div.
-
-        $html .= html_writer::end_div();
-
-        return $html;
-    }
-
-    /**
-     * The standard tags (typically performance information and validation links,
-     * if we are in developer debug mode) that should be output in the footer area
-     * of the page. Designed to be called in theme layout.php files.
-     *
-     * @return string HTML fragment.
-     */
-    public function standard_footer_html() {
-        global $CFG, $SCRIPT;
-
-        $output = '<div class="plugins_standard_footer_html">';
-        if (during_initial_install()) {
-            return $output;
-        }
-
-        $pluginswithfunction = get_plugins_with_function('standard_footer_html', 'lib.php');
-        foreach ($pluginswithfunction as $plugins) {
-            foreach ($plugins as $function) {
-                if ($function === 'tool_dataprivacy_standard_footer_html') {
-                    $output .= $this->get_dataprivacyurl();
-
-                    continue;
+            case \moodle_page::STATE_PRINTING_HEADER:
+                // We should hopefully never get here.
+                throw new \coding_exception('You cannot redirect while printing the page header');
+                break;
+            case \moodle_page::STATE_IN_BODY:
+                // We really shouldn't be here but we can deal with this.
+                debugging("You should really redirect before you start page output");
+                if (!$debugdisableredirect) {
+                    $this->page->requires->js_function_call('document.location.replace', [$url], false, $delay);
                 }
-
-                if ($function === 'tool_mobile_standard_footer_html') {
-                    $output .= $this->get_mobileappurl();
-
-                    continue;
-                }
-
-                $output .= $function();
-            }
+                $output = $this->opencontainers->pop_all_but_last();
+                break;
+            case \moodle_page::STATE_DONE:
+                // Too late to be calling redirect now.
+                throw new \coding_exception('You cannot redirect after the entire page has been generated');
+                break;
         }
 
-        $output .= $this->unique_performance_info_token;
-        if ($this->page->devicetypeinuse == 'legacy') {
-            // The legacy theme is in use print the notification.
-            $output .= html_writer::tag('div', get_string('legacythemeinuse'), array('class' => 'legacythemeinuse'));
+        $output .= $this->notification($message, $messagetype);
+
+        $output .= $this->render_from_template('theme_moove/loading-overlay', ['encodedurl' => $encodedurl]);
+
+        if ($debugdisableredirect) {
+            $output .= '<p><strong>' . get_string('erroroutput', 'error') . '</strong></p>';
         }
 
-        // Get links to switch device types (only shown for users not on a default device).
-        $output .= $this->theme_switch_links();
-
-        if (!empty($CFG->debugpageinfo)) {
-            $output .= '<div class="performanceinfo pageinfo">This page is: ' . $this->page->debug_summary() . '</div>';
-        }
-
-        if (debugging(null, DEBUG_DEVELOPER) and has_capability('moodle/site:config', context_system::instance())) {
-            // Add link to profiling report if necessary.
-            if (function_exists('profiling_is_running') && profiling_is_running()) {
-                $txt = get_string('profiledscript', 'admin');
-                $title = get_string('profiledscriptview', 'admin');
-                $url = $CFG->wwwroot . '/admin/tool/profiling/index.php?script=' . urlencode($SCRIPT);
-                $link = '<a title="' . $title . '" href="' . $url . '">' . $txt . '</a>';
-                $output .= '<div class="profilingfooter">' . $link . '</div>';
-            }
-            $purgeurl = new moodle_url('/admin/purgecaches.php', array('confirm' => 1,
-                'sesskey' => sesskey(), 'returnurl' => $this->page->url->out_as_local_url(false)));
-            $output .= '<div class="purgecaches">' .
-                html_writer::link($purgeurl, get_string('purgecaches', 'admin')) . '</div>';
-        }
-
-        $output .= '</div>';
+        $output .= $this->footer();
 
         return $output;
     }
 
     /**
-     * Returns the dataprivacy url
+     * Renders the "breadcrumb" for all pages in boost.
      *
-     * @return string
-     *
-     * @throws \coding_exception
-     * @throws \dml_exception
-     * @throws \moodle_exception
+     * @return string the HTML for the navbar.
      */
-    private function get_dataprivacyurl() {
-        $output = '';
-
-        // A returned 0 means that the setting was set and disabled, false means that there is no value for the provided setting.
-        $showsummary = get_config('tool_dataprivacy', 'showdataretentionsummary');
-        if ($showsummary === false) {
-            // This means that no value is stored in db. We use the default value in this case.
-            $showsummary = true;
-        }
-
-        if ($showsummary) {
-            $url = new moodle_url('/admin/tool/dataprivacy/summary.php');
-            $output = html_writer::link($url,
-                "<i class='slicon-folder-alt'></i> " . get_string('dataretentionsummary', 'tool_dataprivacy'),
-                ['class' => 'btn btn-default']
-            );
-
-            $output = html_writer::div($output, 'tool_dataprivacy mb-2');
-        }
-
-        return $output;
+    public function navbar(): string {
+        $newnav = new \theme_moove\output\boostnavbar($this->page);
+        return $this->render_from_template('core/navbar', $newnav);
     }
 
     /**
-     * Returns the mobile app url
+     * Render my learning controls
      *
-     * @return string
-     *
-     * @throws \coding_exception
+     * @return string My learning controls html content.
      */
-    private function get_mobileappurl() {
-        global $CFG;
-        $output = '';
-        if (!empty($CFG->enablemobilewebservice) && $url = tool_mobile_create_app_download_url()) {
-            $url = html_writer::link($url,
-                                "<i class='slicon-screen-smartphone'></i> ".get_string('getmoodleonyourmobile', 'tool_mobile'),
-                                     ['class' => 'btn btn-primary']);
-
-            $output .= html_writer::div($url, 'mobilefooter mb-2');
+    public function render_mylearning_controls() {
+        if (!isloggedin() || isguestuser()) {
+            return '';
         }
 
-        return $output;
+        return $this->render_from_template('theme_moove/moove/mylearning', []);
     }
 
     /**
-     * Wrapper for breadcrumb elements.
+     * Render darkmode controls
      *
-     * @return string HTML to display the main header.
-     *
-     * @throws \coding_exception
-     * @throws \moodle_exception
+     * @return string Dark mode controls html content.
      */
-    public function breadcrumb_header() {
-        $header = new stdClass();
-        $header->hasnavbar = empty($this->page->layout_options['nonavbar']);
-        $header->navbar = $this->navbar();
-
-        $header->contextheader = $this->context_header();
-        if ($this->page->pagelayout == 'mypublic') {
-            $header->contextheader = "<h2>". get_string('userprofile', 'theme_moove') ."</h2>";
+    public function render_darkmode_controls() {
+        if (!isloggedin() || isguestuser()) {
+            return '';
         }
 
-        return $this->render_from_template('theme_moove/breadcrumb', $header);
-    }
+        $settings = new settings();
 
-    /**
-     * Returns HTML attributes to use within the body tag. This includes an ID and classes.
-     *
-     * @param string|array $additionalclasses Any additional classes to give the body tag,
-     *
-     * @return string
-     *
-     * @throws \coding_exception
-     *
-     * @since Moodle 2.5.1 2.6
-     */
-    public function body_attributes($additionalclasses = array()) {
-        $hasaccessibilitybar = get_user_preferences('thememoovesettings_enableaccessibilitytoolbar', '');
-        if ($hasaccessibilitybar) {
-            $additionalclasses[] = 'hasaccessibilitybar';
-
-            $currentfontsizeclass = get_user_preferences('accessibilitystyles_fontsizeclass', '');
-            if ($currentfontsizeclass) {
-                $additionalclasses[] = $currentfontsizeclass;
-            }
-
-            $currentsitecolorclass = get_user_preferences('accessibilitystyles_sitecolorclass', '');
-            if ($currentsitecolorclass) {
-                $additionalclasses[] = $currentsitecolorclass;
-            }
+        if (!$settings->enabledarkmode) {
+            return '';
         }
 
-        $fonttype = get_user_preferences('thememoovesettings_fonttype', '');
-        if ($fonttype) {
-            $additionalclasses[] = $fonttype;
-        }
-
-        if (!is_array($additionalclasses)) {
-            $additionalclasses = explode(' ', $additionalclasses);
-        }
-
-        return ' id="'. $this->body_id().'" class="'.$this->body_css_classes($additionalclasses).'"';
+        return $this->render_from_template('theme_moove/moove/darkmode', []);
     }
 }
