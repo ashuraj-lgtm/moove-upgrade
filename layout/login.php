@@ -15,30 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A login page layout for the boost theme.
+ * A login page layout for the moove theme.
  *
- * @package   theme_moove
- * @copyright 2017 Willian Mano - http://conecti.me
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    theme_moove
+ * @copyright  2022 Willian Mano {@link https://conecti.me}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$extraclasses[] = 'moove-login';
-$bodyattributes = $OUTPUT->body_attributes($extraclasses);
+$bodyattributes = $OUTPUT->body_attributes(['moove-login']);
 
 $templatecontext = [
     'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
     'output' => $OUTPUT,
-    'bodyattributes' => $bodyattributes,
-    'catalogueurl' => $CFG->wwwroot.'/local/catalogue/index.php',
+    'bodyattributes' => $bodyattributes
 ];
-if ($OUTPUT->get_logo()) {
-	$templatecontext['logingpagelogo'] = $OUTPUT->get_logo();
-}
-if ($this->page->pagetype == 'login-signup') {
-    $templatecontext['logourl'] = $OUTPUT->get_logo();
-}
-
 
 echo $OUTPUT->render_from_template('theme_moove/login', $templatecontext);

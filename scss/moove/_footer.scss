@@ -1,119 +1,194 @@
-#top-footer {
-    background-repeat: repeat-x;
-    background-position: center bottom;
-    padding: 40px 15px;
-    color: $headings-color;
+#page-footer {
+    margin: 0 -15px;
+    background-color: #282829;
+    color: #fff;
 
-    h3 {
-        color: $brand-primary;
+    a:not(.btn) {
+        color: #fff;
     }
 
-    ul {
-        list-style: none;
+    .contactsitesupport {
+        border: 1px solid #fff;
+        color: #fff;
     }
 
-    .contact ul li {
-        font-size: 1.2rem;
-        margin-bottom: 4px;
+    .popover.footer .popover-body .footer-section {
+        color: #1d2125;
 
-        i {
-            margin-right: 3px;
-            min-width: 20px;
-        }
-
-        a, i {
-            display: inline-block;
-            vertical-align: middle;
+        a {
+            color: #1d2125;
         }
     }
 
-    .social {
-        text-align: right;
-        ul li {
-            display: inline;
+    .footer-columns {
+        padding: 15px;
+    }
 
-            a {
-                text-decoration: none;
-                color: #fff;
+    .logo {
+        max-width: 50%;
+    }
 
-                &.facebook {
-                    background-color: $m-facebook-color;
-                }
+    h3.footer-title {
+        font-size: $h6-font-size;
+        line-height: 1.2;
+        font-weight: 500;
+    }
 
-                &.twitter {
-                    background-color: $m-twitter-color;
-                }
+    .socialnetworks,
+    .contact {
+        margin-top: .5rem;
 
-                &.googleplus {
-                    background-color: $m-googleplus-color;
-                }
+        ul {
+            padding-left: 0;
 
-                &.linkedin {
-                    background-color: $m-linkedin-color;
-                }
+            li {
+                display: inline;
 
-                &.youtube {
-                    background-color: $m-youtube-color;
-                }
+                a {
+                    text-decoration: none;
+                    color: #fff;
+                    width: 38px;
+                    height: 38px;
 
-                &.instagram {
-                    background-color: $m-instagram-color;
-                }
+                    &.btn-rounded {
+                        border-radius: 50%;
+                    }
 
-                &:hover {
-                    background-color: $brand-primary;
+                    &.website {
+                        background-color: $brand-primary;
+                        &:hover {
+                            background-color: darken($brand-primary, 20%);
+                        }
+                    }
+
+                    &.mobile {
+                        background-color: $brand-primary;
+                        &:hover {
+                            background-color: darken($brand-primary, 20%);
+                        }
+                    }
+
+                    &.mail {
+                        background-color: $brand-primary;
+                        &:hover {
+                            background-color: darken($brand-primary, 20%);
+                        }
+                    }
+
+                    &.facebook {
+                        background-color: $facebook-color;
+                        &:hover {
+                            background-color: darken($facebook-color, 20%);
+                        }
+                    }
+
+                    &.twitter {
+                        background-color: $twitter-color;
+                        &:hover {
+                            background-color: darken($twitter-color, 20%);
+                        }
+                    }
+
+                    &.linkedin {
+                        background-color: $linkedin-color;
+                        &:hover {
+                            background-color: darken($linkedin-color, 20%);
+                        }
+                    }
+
+                    &.youtube {
+                        background-color: $youtube-color;
+                        &:hover {
+                            background-color: darken($youtube-color, 20%);
+                        }
+                    }
+
+                    &.instagram {
+                        background-color: $instagram-color;
+                        &:hover {
+                            background-color: darken($instagram-color, 20%);
+                        }
+                    }
+
+                    &.whatsapp {
+                        background-color: $whatsapp-color;
+                        &:hover {
+                            background-color: darken($whatsapp-color, 20%);
+                        }
+                    }
+
+                    &.telegram {
+                        background-color: $telegram-color;
+
+                        &:hover {
+                            background-color: darken($telegram-color, 20%);
+                        }
+
+                        .fa {
+                            margin-left: -1px;
+                        }
+                    }
                 }
             }
         }
     }
 
-    .plugins_standard_footer_html {
-        .mobilefooter a.btn {
-            white-space: inherit;
+    .supportemail,
+    .logininfo,
+    .tool_dataprivacy{
+        margin: .5rem 0;
+    }
+
+    .column-center {
+        text-align: center;
+    }
+
+    .column-right {
+        text-align: right;
+
+        .stores {
+            a {
+                display: block;
+            }
+
+            img {
+                max-width: 160px;
+            }
+        }
+    }
+
+    .copyright {
+        background-color: $moodle-color;
+        text-align: center;
+        min-height: inherit;
+        color: #fff;
+        margin-bottom: 0;
+
+        .madeby {
+            padding: .5rem 0;
+
+            p {
+                margin-bottom: 0;
+            }
+        }
+    }
+
+    .btn-footer-popover {
+        bottom: 1rem;
+    }
+}
+
+@include media-breakpoint-down(sm) {
+    #page-footer {
+        .column-right,
+        .column-left {
+            text-align: center;
+        }
+
+        .column-center,
+        .column-right {
+            margin-top: 1rem;
         }
     }
 }
 
-#page-footer {
-    background-color: $m-moodle-color;
-    text-align: center;
-    min-height: inherit;
-    color: #fff;
-
-    .madewithmoodle {
-        margin-bottom: .5rem;
-        p {
-            text-transform: uppercase;
-            font-weight: 700;
-            font-size: 14px;
-            margin-bottom: 0;
-            display: inline-block;
-        }
-
-        img {
-            max-width: 100px;
-            margin-top: -12px;
-        }
-    }
-    .madeby {
-        font-size: 14px;
-
-        a {
-            color: #fff;
-        }
-
-        p {
-            margin-bottom: 0;
-        }
-    }
-}
-
-@include media-breakpoint-down(md) {
-    #top-footer .social {
-        text-align: left;
-
-        .plugins_standard_footer_html {
-            padding-left: 1rem;
-        }
-    }
-}

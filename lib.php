@@ -22,136 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-/**
- * Inject additional SCSS.
- *
- * @param theme_config $theme The theme config object.
- * @return string
- */
-function theme_moove_get_extra_scss($theme) {
-    $scss = $theme->settings->scss;
-
-    $scss .= theme_moove_set_headerimg($theme);
-
-    $scss .= theme_moove_set_topfooterimg($theme);
-
-    $scss .= theme_moove_set_loginbgimg($theme);
-
-    $scss .= theme_moove_set_signupbgimg($theme);
-
-    $scss .= theme_moove_set_homebgimg($theme);
-
-    return $scss;
-}
-
-/**
- * Adds the cover to CSS.
- *
- * @param theme_config $theme The theme config object.
- * @return string
- */
-function theme_moove_set_headerimg($theme) {
-    global $OUTPUT;
-
-    $headerimg = $theme->setting_file_url('headerimg', 'headerimg');
-
-    if (is_null($headerimg)) {
-        $headerimg = $OUTPUT->image_url('headerimg', 'theme');
-    }
-
-    $headercss = "#page-site-index.notloggedin #page-header {background-image: url('$headerimg');}";
-
-    return $headercss;
-}
-
-/**
- * Adds the footer image to CSS.
- *
- * @param theme_config $theme The theme config object.
- * @return string
- */
-function theme_moove_set_topfooterimg($theme) {
-    global $OUTPUT;
-
-    $topfooterimg = $theme->setting_file_url('topfooterimg', 'topfooterimg');
-
-    if (is_null($topfooterimg)) {
-        $topfooterimg = $OUTPUT->image_url('footer-bg', 'theme');
-    }
-
-    $headercss = "#top-footer {background-image: url('$topfooterimg');}";
-
-    return $headercss;
-}
-
-/**
- * Adds the login page background image to CSS.
- *
- * @param theme_config $theme The theme config object.
- * @return string
- */
-function theme_moove_set_loginbgimg($theme) {
-    global $OUTPUT;
-
-    $loginbgimg = $theme->setting_file_url('loginbgimg', 'loginbgimg');
-
-
-    if (is_null($loginbgimg)) {
-        $loginbgimg = $OUTPUT->image_url('login_bg', 'theme');
-    }
-
-
-    $headercss = "#page-login-index.moove-login #page-wrapper #page {background-image: url('$loginbgimg');}";
-
-    return $headercss;
-}
-
-
-/**
- * Adds the signup page background image to CSS.
- *
- * @param theme_config $theme The theme config object.
- * @return string
- */
-function theme_moove_set_signupbgimg($theme) {
-    global $OUTPUT;
-
-    $loginbgimg = $theme->setting_file_url('loginbgimg', 'loginbgimg');
-
-    if (is_null($loginbgimg)) {
-        $loginbgimg = $OUTPUT->image_url('login_bg', 'theme');
-    }
-
-    $headercss = "#page-login-signup.moove-login #page-wrapper #page {background-image: url('$loginbgimg');}";
-
-    return $headercss;
-}
-
-/**
- * Adds the Home page background image to CSS.
- *
- * @param theme_config $theme The theme config object.
- * @return string
- */
-
-function theme_moove_set_homebgimg($theme) {
-    global $OUTPUT;
-
-    $loginbgimg = $theme->setting_file_url('loginbgimg', 'loginbgimg');
-
-    if (is_null($loginbgimg)) {
-        $loginbgimg = $OUTPUT->image_url('login_bg', 'theme');
-    }
-
-    $headercss = "#page-my-index {background-image: url('$loginbgimg');}";
-
-    return $headercss;
-}
-
-
-
 /**
  * Returns the main SCSS content.
  *
@@ -167,13 +37,10 @@ function theme_moove_get_main_scss_content($theme) {
 
     $context = context_system::instance();
     if ($filename == 'default.scss') {
-        // We still load the default preset files directly from the boost theme. No sense in duplicating them.
         $scss .= file_get_contents($CFG->dirroot . '/theme/boost/scss/preset/default.scss');
     } else if ($filename == 'plain.scss') {
-        // We still load the default preset files directly from the boost theme. No sense in duplicating them.
         $scss .= file_get_contents($CFG->dirroot . '/theme/boost/scss/preset/plain.scss');
     } else if ($filename && ($presetfile = $fs->get_file($context->id, 'theme_moove', 'preset', 0, '/', $filename))) {
-        // This preset file was fetched from the file area for theme_moove and not theme_boost (see the line above).
         $scss .= $presetfile->get_content();
     } else {
         // Safety fallback - maybe new installs etc.
@@ -182,10 +49,33 @@ function theme_moove_get_main_scss_content($theme) {
 
     // Moove scss.
     $moovevariables = file_get_contents($CFG->dirroot . '/theme/moove/scss/moove/_variables.scss');
-    $moove = file_get_contents($CFG->dirroot . '/theme/moove/scss/moove.scss');
+    $moove = file_get_contents($CFG->dirroot . '/theme/moove/scss/default.scss');
 
     // Combine them together.
-    return $moovevariables . "\n" . $scss . "\n" . $moove;
+    $allscss = $moovevariables . "\n" . $scss . "\n" . $moove;
+
+    return $allscss;
+}
+
+/**
+ * Inject additional SCSS.
+ *
+ * @param theme_config $theme The theme config object.
+ * @return string
+ */
+function theme_moove_get_extra_scss($theme) {
+    $content = '';
+
+    // Sets the login background image.
+    $loginbgimgurl = $theme->setting_file_url('loginbgimg', 'loginbgimg');
+    if (!empty($loginbgimgurl)) {
+        $content .= 'body.pagelayout-login #page { ';
+        $content .= "background-image: url('$loginbgimgurl'); background-size: cover;";
+        $content .= ' }';
+    }
+
+    // Always return the background image with the scss when we have it.
+    return !empty($theme->settings->scss) ? $theme->settings->scss . ' ' . $content : $content;
 }
 
 /**
@@ -199,9 +89,8 @@ function theme_moove_get_pre_scss($theme) {
     $configurable = [
         // Config key => [variableName, ...].
         'brandcolor' => ['brand-primary'],
-        'navbarheadercolor' => 'navbar-header-color',
-        'navbarbg' => 'navbar-bg',
-        'navbarbghover' => 'navbar-bg-hover'
+        'secondarymenucolor' => 'secondary-menu-color',
+        'fontsite' => 'font-family-sans-serif'
     ];
 
     // Prepend variables first.
@@ -211,7 +100,11 @@ function theme_moove_get_pre_scss($theme) {
             continue;
         }
         array_map(function($target) use (&$scss, $value) {
-            $scss .= '$' . $target . ': ' . $value . ";\n";
+            if ($target == 'fontsite') {
+                $scss .= '$' . $target . ': "' . $value . '", sans-serif !default' .";\n";
+            } else {
+                $scss .= '$' . $target . ': ' . $value . ";\n";
+            }
         }, (array) $targets);
     }
 
@@ -221,6 +114,17 @@ function theme_moove_get_pre_scss($theme) {
     }
 
     return $scss;
+}
+
+/**
+ * Get compiled css.
+ *
+ * @return string compiled css
+ */
+function theme_moove_get_precompiled_css() {
+    global $CFG;
+
+    return file_get_contents($CFG->dirroot . '/theme/moove/style/moodle.css');
 }
 
 /**
@@ -238,240 +142,35 @@ function theme_moove_get_pre_scss($theme) {
 function theme_moove_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = array()) {
     $theme = theme_config::load('moove');
 
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'logo') {
-        return $theme->setting_file_serve('logo', $args, $forcedownload, $options);
+    if ($context->contextlevel == CONTEXT_SYSTEM &&
+        ($filearea === 'logo' || $filearea === 'loginbgimg' || $filearea == 'favicon')) {
+        $theme = theme_config::load('moove');
+        // By default, theme files must be cache-able by both browsers and proxies.
+        if (!array_key_exists('cacheability', $options)) {
+            $options['cacheability'] = 'public';
+        }
+        return $theme->setting_file_serve($filearea, $args, $forcedownload, $options);
     }
 
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'headerimg') {
-        return $theme->setting_file_serve('headerimg', $args, $forcedownload, $options);
+    if ($context->contextlevel == CONTEXT_SYSTEM && preg_match("/^sliderimage[1-9][0-9]?$/", $filearea) !== false) {
+        return $theme->setting_file_serve($filearea, $args, $forcedownload, $options);
     }
 
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'marketing1icon') {
+    if ($context->contextlevel == CONTEXT_SYSTEM && $filearea === 'marketing1icon') {
         return $theme->setting_file_serve('marketing1icon', $args, $forcedownload, $options);
     }
 
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'marketing2icon') {
+    if ($context->contextlevel == CONTEXT_SYSTEM && $filearea === 'marketing2icon') {
         return $theme->setting_file_serve('marketing2icon', $args, $forcedownload, $options);
     }
 
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'marketing3icon') {
+    if ($context->contextlevel == CONTEXT_SYSTEM && $filearea === 'marketing3icon') {
         return $theme->setting_file_serve('marketing3icon', $args, $forcedownload, $options);
     }
 
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'marketing4icon') {
+    if ($context->contextlevel == CONTEXT_SYSTEM && $filearea === 'marketing4icon') {
         return $theme->setting_file_serve('marketing4icon', $args, $forcedownload, $options);
     }
 
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'topfooterimg') {
-        return $theme->setting_file_serve('topfooterimg', $args, $forcedownload, $options);
-    }
-
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'loginbgimg') {
-        return $theme->setting_file_serve('loginbgimg', $args, $forcedownload, $options);
-    }
-
-    if ($context->contextlevel == CONTEXT_SYSTEM and $filearea === 'favicon') {
-        return $theme->setting_file_serve('favicon', $args, $forcedownload, $options);
-    }
-
-    if ($context->contextlevel == CONTEXT_SYSTEM and preg_match("/^sliderimage[1-9][0-9]?$/", $filearea) !== false) {
-        return $theme->setting_file_serve($filearea, $args, $forcedownload, $options);
-    }
-
-    if ($context->contextlevel == CONTEXT_SYSTEM and preg_match("/^sponsorsimage[1-9][0-9]?$/", $filearea) !== false) {
-        return $theme->setting_file_serve($filearea, $args, $forcedownload, $options);
-    }
-
-    if ($context->contextlevel == CONTEXT_SYSTEM and preg_match("/^clientsimage[1-9][0-9]?$/", $filearea) !== false) {
-        return $theme->setting_file_serve($filearea, $args, $forcedownload, $options);
-    }
-
     send_file_not_found();
-}
-
-/**
- * Get theme setting
- *
- * @param string $setting
- * @param bool $format
- * @return string
- */
-function theme_moove_get_setting($setting, $format = false) {
-    $theme = theme_config::load('moove');
-
-    if (empty($theme->settings->$setting)) {
-        return false;
-    }
-
-    if (!$format) {
-        return $theme->settings->$setting;
-    }
-
-    if ($format === 'format_text') {
-        return format_text($theme->settings->$setting, FORMAT_PLAIN);
-    }
-
-    if ($format === 'format_html') {
-        return format_text($theme->settings->$setting, FORMAT_HTML, array('trusted' => true, 'noclean' => true));
-    }
-
-    return format_string($theme->settings->$setting);
-}
-
-
-/**
- * Extend the Moove navigation
- *
- * @param flat_navigation $flatnav
- */
-function theme_moove_extend_flat_navigation(\flat_navigation $flatnav) {
-    theme_moove_add_certificatesmenuitem($flatnav);
-
-    theme_moove_delete_menuitems($flatnav);
-
-    theme_moove_add_coursesections_to_navigation($flatnav);
-}
-
-/**
- * Add items to flat navigation menu
- *
- * @param flat_navigation $flatnav
- *
- */
-function theme_moove_add_certificatesmenuitem(\flat_navigation $flatnav) {
-    global $COURSE;
-
-    try {
-        if (!theme_moove_has_certificates_plugin()) {
-            return;
-        }
-
-        $actionurl = new \moodle_url('/theme/moove/certificates.php');
-
-        // Course page.
-        if ($COURSE->id > 1) {
-            $parentitem = $flatnav->find('competencies', \navigation_node::TYPE_SETTING);
-
-            $actionurl = new \moodle_url('/theme/moove/certificates.php', ['id' => $COURSE->id]);
-        }
-
-        if ($COURSE->id == 1 && !$parentitem = $flatnav->find('privatefiles', \navigation_node::TYPE_SETTING)) {
-            return;
-        }
-
-        if ( !empty($parentitem) && !is_null($parentitem->parent)) {
-            $certificatesitemoptions = [
-                'action' => $actionurl,
-                'text' => get_string('certificates', 'theme_moove'),
-                'shorttext' => get_string('certificates', 'theme_moove'),
-                'icon' => new pix_icon('i/export', ''),
-                'type' => \navigation_node::TYPE_SETTING,
-                'key' => 'certificates',
-                'parent' => $parentitem->parent
-            ];
-
-            $certificatesitem = new \flat_navigation_node($certificatesitemoptions, 0);
-
-            $flatnav->add($certificatesitem, $parentitem->key);
-        }
-    } catch (\coding_exception $e) {
-        debugging($e->getMessage(), DEBUG_DEVELOPER, $e->getTrace());
-    } catch (\moodle_exception $e) {
-        debugging($e->getMessage(), DEBUG_NORMAL, $e->getTrace());
-    }
-}
-
-/**
- * Remove items from navigation
- *
- * @param flat_navigation $flatnav
- */
-function theme_moove_delete_menuitems(\flat_navigation $flatnav) {
-
-    $itemstodelete = [
-        'coursehome'
-    ];
-
-    foreach ($flatnav as $item) {
-        if (in_array($item->key, $itemstodelete)) {
-            $flatnav->remove($item->key);
-
-            continue;
-        }
-
-        if (isset($item->parent->key) && $item->parent->key == 'mycourses' &&
-            isset($item->type) && $item->type == \navigation_node::TYPE_COURSE) {
-
-            $flatnav->remove($item->key, \navigation_node::TYPE_COURSE);
-        }
-    }
-}
-
-/**
- * Improve flat navigation menu
- *
- * @param flat_navigation $flatnav
- */
-function theme_moove_add_coursesections_to_navigation(\flat_navigation $flatnav) {
-    global $PAGE;
-
-    $participantsitem = $flatnav->find('participants', \navigation_node::TYPE_CONTAINER);
-
-    if (!$participantsitem) {
-        return;
-    }
-
-    if ($PAGE->course->format != 'singleactivity') {
-        $coursesectionsoptions = [
-            'text' => get_string('coursesections', 'theme_moove'),
-            'shorttext' => get_string('coursesections', 'theme_moove'),
-            'icon' => new pix_icon('t/viewdetails', ''),
-            'type' => \navigation_node::COURSE_CURRENT,
-            'key' => 'course-sections',
-            'parent' => $participantsitem->parent
-        ];
-
-        $coursesections = new \flat_navigation_node($coursesectionsoptions, 0);
-
-        foreach ($flatnav as $item) {
-            if ($item->type == \navigation_node::TYPE_SECTION) {
-                $coursesections->add_node(new \navigation_node([
-                    'text' => $item->text,
-                    'shorttext' => $item->shorttext,
-                    'icon' => $item->icon,
-                    'type' => $item->type,
-                    'key' => $item->key,
-                    'parent' => $coursesections,
-                    'action' => $item->action
-                ]));
-            }
-        }
-
-        $flatnav->add($coursesections, $participantsitem->key);
-    }
-
-    $mycourses = $flatnav->find('mycourses', \navigation_node::NODETYPE_LEAF);
-
-    if ($mycourses) {
-        $flatnav->remove($mycourses->key);
-
-        $flatnav->add($mycourses, 'privatefiles');
-    }
-}
-
-/**
- * Check if a certificate plugin is installed.
- *
- * @return bool
- */
-function theme_moove_has_certificates_plugin() {
-    $simplecertificate = \core_plugin_manager::instance()->get_plugin_info('mod_simplecertificate');
-
-    $customcert = \core_plugin_manager::instance()->get_plugin_info('mod_customcert');
-
-    if ($simplecertificate || $customcert) {
-        return true;
-    }
-
-    return false;
 }

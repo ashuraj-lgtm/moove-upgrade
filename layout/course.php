@@ -15,71 +15,120 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A two column layout for the moove theme.
+ * A drawer based layout for the moove theme.
  *
- * @package   theme_moove
- * @copyright 2017 Willian Mano - http://conecti.me
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    theme_moove
+ * @copyright  2022 Willian Mano {@link https://conecti.me}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-user_preference_allow_ajax_update('drawer-open-nav', PARAM_ALPHA);
-user_preference_allow_ajax_update('sidepre-open', PARAM_ALPHA);
-
 require_once($CFG->libdir . '/behat/lib.php');
+require_once($CFG->dirroot . '/course/lib.php');
+
+// Add block button in editing mode.
+$addblockbutton = $OUTPUT->addblockbutton();
+
+user_preference_allow_ajax_update('drawer-open-nav', PARAM_ALPHA);
+user_preference_allow_ajax_update('drawer-open-index', PARAM_BOOL);
+user_preference_allow_ajax_update('drawer-open-block', PARAM_BOOL);
 
 if (isloggedin()) {
-    $navdraweropen = (get_user_preferences('drawer-open-nav', 'true') == 'true');
-    $draweropenright = (get_user_preferences('sidepre-open', 'true') == 'true');
+    $courseindexopen = (get_user_preferences('drawer-open-index', true) == true);
+    $blockdraweropen = (get_user_preferences('drawer-open-block') == true);
 } else {
-    $navdraweropen = false;
-    $draweropenright = false;
+    $courseindexopen = false;
+    $blockdraweropen = false;
+}
+
+if (defined('BEHAT_SITE_RUNNING')) {
+    $blockdraweropen = true;
+}
+
+$extraclasses = ['uses-drawers'];
+if ($courseindexopen) {
+    $extraclasses[] = 'drawer-open-index';
 }
 
 $blockshtml = $OUTPUT->blocks('side-pre');
-$hasblocks = strpos($blockshtml, 'data-block=') !== false;
+$hasblocks = (strpos($blockshtml, 'data-block=') !== false || !empty($addblockbutton));
 
-$extraclasses = [];
-if ($navdraweropen) {
-    $extraclasses[] = 'drawer-open-left';
+$addcontentblockbutton = $OUTPUT->addblockbutton('content');
+$contentblocks = $OUTPUT->custom_block_region('content');
+
+if (!$hasblocks) {
+    $blockdraweropen = false;
 }
 
-if ($draweropenright && $hasblocks) {
-    $extraclasses[] = 'drawer-open-right';
+$themesettings = new \theme_moove\util\settings();
+
+if (!$themesettings->enablecourseindex) {
+    $courseindex = '';
+} else {
+    $courseindex = core_course_drawer();
 }
 
-$coursepresentation = theme_moove_get_setting('coursepresentation');
-if ($coursepresentation == 2) {
-    $extraclasses[] = 'coursepresentation-cover';
+if (!$courseindex) {
+    $courseindexopen = false;
 }
+
+$forceblockdraweropen = $OUTPUT->firstview_fakeblocks();
+
+$secondarynavigation = false;
+$overflow = '';
+if ($PAGE->has_secondary_navigation()) {
+    $secondary = $PAGE->secondarynav;
+
+    if ($secondary->get_children_key_list()) {
+        $tablistnav = $PAGE->has_tablist_secondary_navigation();
+        $moremenu = new \core\navigation\output\more_menu($PAGE->secondarynav, 'nav-tabs', true, $tablistnav);
+        $secondarynavigation = $moremenu->export_for_template($OUTPUT);
+        $extraclasses[] = 'has-secondarynavigation';
+    }
+
+    $overflowdata = $PAGE->secondarynav->get_overflow_menu_data();
+    if (!is_null($overflowdata)) {
+        $overflow = $overflowdata->export_for_template($OUTPUT);
+    }
+}
+
+$primary = new core\navigation\output\primary($PAGE);
+$renderer = $PAGE->get_renderer('core');
+$primarymenu = $primary->export_for_template($renderer);
+$buildregionmainsettings = !$PAGE->include_region_main_settings_in_header_actions() && !$PAGE->has_secondary_navigation();
+// If the settings menu will be included in the header then don't add it here.
+$regionmainsettingsmenu = $buildregionmainsettings ? $OUTPUT->region_main_settings_menu() : false;
+
+$header = $PAGE->activityheader;
+$headercontent = $header->export_for_template($renderer);
 
 $bodyattributes = $OUTPUT->body_attributes($extraclasses);
-$regionmainsettingsmenu = $OUTPUT->region_main_settings_menu();
 $templatecontext = [
     'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
     'output' => $OUTPUT,
     'sidepreblocks' => $blockshtml,
     'hasblocks' => $hasblocks,
     'bodyattributes' => $bodyattributes,
-    'hasdrawertoggle' => true,
-    'navdraweropen' => $navdraweropen,
-    'draweropenright' => $draweropenright,
+    'courseindexopen' => $courseindexopen,
+    'blockdraweropen' => $blockdraweropen,
+    'courseindex' => $courseindex,
+    'primarymoremenu' => $primarymenu['moremenu'],
+    'secondarymoremenu' => $secondarynavigation ?: false,
+    'mobileprimarynav' => $primarymenu['mobileprimarynav'],
+    'usermenu' => $primarymenu['user'],
+    'langmenu' => $primarymenu['lang'],
+    'forceblockdraweropen' => $forceblockdraweropen,
     'regionmainsettingsmenu' => $regionmainsettingsmenu,
-    'hasregionmainsettingsmenu' => !empty($regionmainsettingsmenu)
+    'hasregionmainsettingsmenu' => !empty($regionmainsettingsmenu),
+    'overflow' => $overflow,
+    'headercontent' => $headercontent,
+    'addblockbutton' => $addblockbutton,
+    'enablecourseindex' => $themesettings->enablecourseindex,
+    'addcontentblockbutton' => $addcontentblockbutton,
+    'contentblocks' => $contentblocks
 ];
 
-// Improve boost navigation.
-theme_moove_extend_flat_navigation($PAGE->flatnav);
+$templatecontext = array_merge($templatecontext, $themesettings->footer());
 
-$templatecontext['flatnavigation'] = $PAGE->flatnav;
-
-$themesettings = new \theme_moove\util\theme_settings();
-
-$templatecontext = array_merge($templatecontext, $themesettings->footer_items());
-
-if (!$coursepresentation || $coursepresentation == 1) {
-    echo $OUTPUT->render_from_template('theme_moove/columns2', $templatecontext);
-} else if ($coursepresentation == 2) {
-    echo $OUTPUT->render_from_template('theme_moove/course_cover', $templatecontext);
-}
+echo $OUTPUT->render_from_template('theme_moove/course', $templatecontext);

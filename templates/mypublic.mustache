@@ -15,11 +15,9 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template theme_moove/columns2
+    @template theme_moove/drawers
 
-    Admin time setting template.
-
-    Moove 2 column layout template.
+    Boost drawer template.
 
     Context variables required for this template:
     * sitename - The name of the site
@@ -27,7 +25,7 @@
     * bodyattributes - attributes for the body tag as a string of html attributes
     * sidepreblocks - HTML for the blocks
     * hasblocks - true if there are blocks on this page
-    * navdraweropen - true if the nav drawer should be open on page load
+    * courseindexopen - true if the nav drawer should be open on page load
     * regionmainsettingsmenu - HTML for the region main settings menu
     * hasregionmainsettingsmenu - There is a region main settings menu on this page.
 
@@ -38,195 +36,128 @@
             "doctype": "<!DOCTYPE html>",
             "page_title": "Test page",
             "favicon": "favicon.ico",
-         "main_content": "<h1>Headings make html validators happier</h1>"
-        },
+            "main_content": "<h1>Headings make html validators happier</h1>"
+         },
         "bodyattributes":"",
         "sidepreblocks": "<h2>Blocks html goes here</h2>",
         "hasblocks":true,
-        "navdraweropen":true,
-        "sidepreopen":true,
+        "courseindexopen": true,
+        "navdraweropen": false,
+        "blockdraweropen": true,
         "regionmainsettingsmenu": "",
-        "hasregionmainsettingsmenu": false
+        "hasregionmainsettingsmenu": false,
+        "addblockbutton": ""
     }
 }}
-{{>theme_moove/inc_start}}
+{{> theme_moove/head }}
 
-{{# usercard }}
-<div class="col-sm-12 col-md-3">                                                 
-<div class="card user-card">
-    <div class="card-body">
-        {{#user}}
-            <div class="d-flex">
-                <div class="mr-auto"></div>
-                {{{ output.context_header_settings_menu }}}
-            </div>
+<body {{{ bodyattributes }}}>
+{{> theme_moove/accessibilitybar }}
 
-            <div class="profilepic">
-                <img src="{{profilepicture}}" alt="{{{firstname}}} {{{lastname}}}">
-            </div>
+{{> core/local/toast/wrapper}}
+<div id="page-wrapper" class="d-print-block">
 
-            <h3>{{{firstname}}} {{{lastname}}}</h3>
-        {{/user}}
-    </div>
-    <div class="card-footer">
-        {{#headerbuttons}}
-            <a
-                role="button"
-                href="{{{url}}}"
-                class="{{{class}}}"
-                {{#linkattributes}}
-                id="{{{id}}}"
-                data-userid="{{{data-userid}}}"
-                data-is-contact="{{{data-is-contact}}}"
-                {{/linkattributes}}
-            >
-                <span>
-                    <i class="{{{icon}}}" aria-hidden="true" title="{{{title}}}" aria-label="{{{title}}}"></i>
-                    <span class="header-button-title">{{{title}}}</span>
-                </span>
-            </a>
-        {{/headerbuttons}}
-    </div>
-</div>
-</div>
-{{/ usercard }}
+    {{{ output.standard_top_of_body_html }}}
 
-<div id="page" class="container-fluid">
-    <div id="page-content" class="row">
-        <div id="region-main-box" class="col-12">
-            {{#hasregionmainsettingsmenu}}
-            <div id="region-main-settings-menu" class="d-print-none">
-                <div> {{{ output.region_main_settings_menu }}} </div>
-            </div>
-            {{/hasregionmainsettingsmenu}}
+    {{> theme_moove/navbar }}
 
-            {{{ output.breadcrumb_header }}}
+    <div id="page" data-region="mainpage" data-usertour="scroller" class="drawers drag-container">
+        <div id="topofscroll" class="main-inner">
+            <div id="page-content" class="d-print-block">
+                <div id="region-main-box">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card card-body card-profile">
+                                <div class="userpicture">
+                                    <img src="{{{userpicture}}}" alt="{{{userfullname}}}">
+                                </div>
 
-            <section id="region-main my-5">
-                <div class="card border-0 my-3">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-sm-12 col-md-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <!-- Main tabs starts  -->
-                                      <ul class="nav nav-pills mb-3 float-right" id="pills-tab" role="tablist">
-                                          <li class="nav-item">
-                                            <a class="nav-link" id="pills-profileprofilemain-tab" data-toggle="pill" href="#pills-profileprofilemain" role="tab" aria-controls="profileprofilemain-home" aria-selected="true">{{#str}}profileprofile, theme_moove {{/str}}</a>
-                                          </li>
-                                          <li class="nav-item">
-                                            <a class="nav-link" id="pills-profileprogressmain-tab" data-toggle="pill" href="#pills-profileprogressmain" role="tab" aria-controls="pills-profileprogressmain" aria-selected="false">{{#str}}profileprogress, theme_moove{{/str}}</a>
-                                          </li>
-                                          <li class="nav-item">
-                                            <a class="nav-link" id="pills-profileinfographics-tab" data-toggle="pill" href="#pills-profileinfographics" role="tab" aria-controls="pills-profileinfographics" aria-selected="false">{{#str}}profileinfographics, theme_moove {{/str}}</a>
-                                          </li>
-                                     </ul>
-                                        <div class="tab-content" id="pills-tabContent">
-                                          <div class="tab-pane fade" id="pills-profileprofilemain" role="tabpanel" aria-labelledby="pills-profileprofilemain-tab">
-                                            
-                                            <ul class="nav nav-tabs" id="myTab" role="tablist">
-                                                {{#user}}
-                                                    <li class="nav-item">
-                                                        <a class="nav-link " id="profileinfo-tab" data-toggle="tab" href="#profileinfo" role="tab" aria-controls="profileinfo" aria-selected="true"> {{#str}}profileinfo, theme_moove{{/str}} </a>
-                                                    </li>
-                                                {{/user}}
-                                                {{# hascourses }}
-                                                <li class="nav-item">
-                                                    <a class="nav-link" id="courses-tab" data-toggle="tab" href="#cursos" role="tab" aria-controls="cursos" aria-selected="true">{{#str}}profilecourses, theme_moove{{/str}}</a>
+                                <h3>{{{userfullname}}}</h3>
+
+                                <div class="headerbuttons">
+                                    {{#headerbuttons}}
+                                        <a role="button" href="{{{url}}}" class="{{{class}}}"
+                                            {{#linkattributes}}
+                                               id="{{{id}}}"
+                                               data-userid="{{{data-userid}}}"
+                                               data-is-contact="{{{data-is-contact}}}"
+                                               data-currentuserid="{{{data-currentuserid}}}"
+                                            {{/linkattributes}}
+                                        >
+                                            <i class="{{{icon}}}" title="{{{title}}}" aria-label="{{{title}}}"></i>
+                                            {{{title}}}
+                                        </a>
+                                    {{/headerbuttons}}
+                                </div>
+
+                                {{#editprofileurl}}
+                                    <a href="{{{editprofileurl}}}" class="btn btn-sm btn-primary btn-block my-2"><i class="fa fa-edit"></i> {{#str}}editmyprofile{{/str}}</a>
+                                {{/editprofileurl}}
+
+                                <div class="userinfo my-2">
+                                    {{#userdescription}}
+                                        <hr>
+
+                                        <h6>{{#str}}aboutme, theme_moove{{/str}}</h6>
+
+                                        <div class="userdescription">{{{userdescription}}}</div>
+
+                                        <hr>
+                                    {{/userdescription}}
+                                    {{#usercanviewprofile}}
+                                        <h6>{{#str}}personalinformation, theme_moove{{/str}}</h6>
+                                        <ul>
+                                            {{#useremail}}
+                                                <li>
+                                                    <dl>
+                                                        <dt>{{#str}}email{{/str}}:</dt>
+                                                        <dd>
+                                                            <a href="mailto:{{{useremail}}}">{{{useremail}}}</a>
+                                                        </dd>
+                                                    </dl>
                                                 </li>
-                                                {{/ hascourses }}
-                                                <li class="nav-item">
-                                                    <a class="nav-link " id="profilefile-tab" data-toggle="tab" href="#profilefile" role="tab" aria-controls="profilefile" aria-selected="true"> {{#str}}profilefile, theme_moove{{/str}} </a>
+                                            {{/useremail}}
+                                            {{#usercountry}}
+                                                <li>
+                                                    <dl>
+                                                        <dt>{{#str}}country{{/str}}:</dt>
+                                                        <dd>{{{usercountry}}}</dd>
+                                                    </dl>
                                                 </li>
-                                            </ul>
-
-                                        <div class="tab-content" id="mypublic-tab">
-                                              <div class="tab-pane fade" id="profileinfo" role="tabpanel" aria-labelledby="profileinfo-tab">
-                                                <div class="userupdateform col-md-6 offset-3"> {{> theme_moove/viewprofile }} </div>
-                                              </div>
-                                            {{# hascourses }}
-                                                <div class="tab-pane fade" id="cursos" role="tabpanel" aria-labelledby="courses-tab">
-                                                    <div class="my-5"> {{> theme_moove/courseunderprofile }} </div>
-                                                </div>
-                                            {{/ hascourses }}
-                                       
-                                              <div class="tab-pane fade" id="profilefile" role="tabpanel" aria-labelledby="profilefile-tab"> 
-                                                  {{> theme_moove/userfiles }}
-                                              </div>
-                                              <div class="tab-pane fade" id="profileprofile" role="tabpanel" aria-labelledby="profileprofile-tab">
-                                                  <h1> Profile profile </h1>
-                                              </div>
-                                              <div class="tab-pane fade" id="profileupdate" role="tabpanel" aria-labelledby="profileupdate-tab"> 
-                                                <div class="userupdateform col-md-6 offset-3"> {{> theme_moove/updateprofile }} </div>
-                                              </div>
-
-                                        </div>
-                                          </div>
-                                          <div class="tab-pane fade" id="pills-profileprogressmain" role="tabpanel" aria-labelledby="pills-profileprogressmain-tab">
-                                                
-                                         <ul class="nav nav-tabs" id="progresscourseuser" role="tablist"> 
-                                            <li class="nav-item">
-                                               <a class="nav-link " id="profileprogressoverview-tab" data-toggle="tab" href="#profileprogressoverview" role="tab" aria-controls="profileprogressoverview" aria-selected="true"> {{#str}}profileprogressoverview, theme_moove{{/str}} </a>
-                                            </li>
-                                            <li class="nav-item">
-                                                    <a class="nav-link " id="profileprogresscourses-tab" data-toggle="tab" href="#profileprogresscourses" role="tab" aria-controls="profileprogresscourses" aria-selected="true"> {{#str}}profileprogresscourses, theme_moove{{/str}} </a>
-                                            </li>
-                                            <li class="nav-item">
-                                                    <a class="nav-link " id="profileprogressbadges-tab" data-toggle="tab" href="#profileprogressbadges" role="tab" aria-controls="profileprogressbadges" aria-selected="true"> {{#str}}profileprogressbadges, theme_moove{{/str}} </a>
-                                            </li>
+                                            {{/usercountry}}
+                                            {{#usercity}}
+                                                <li>
+                                                    <dl>
+                                                        <dt>{{#str}}city{{/str}}:</dt>
+                                                        <dd>{{{usercity}}}</dd>
+                                                    </dl>
+                                                </li>
+                                            {{/usercity}}
                                         </ul>
-
-                                        <div class="tab-content" id="mypublic-tab">
-                                           <div class="tab-pane fade" id="profileprogressoverview" role="tabpanel" aria-labelledby="profileprogressoverview-tab">
-                                                   {{> theme_moove/progressoverview }}
-                                           </div>
-                                           <div class="tab-pane fade" id="profileprogresscourses" role="tabpanel" aria-labelledby="profileprogresscourses-tab">
-                                                  {{> theme_moove/coursesprogresspage }}
-                                           </div>
-                                           <div class="tab-pane fade" id="profileprogressbadges" role="tabpanel" aria-labelledby="profileprogressbadges-tab">
-                                                 {{{allbadgesuser}}}
-                                            </div>
-                                        </div> 
-                                          </div>
-                                          <div class="tab-pane fade" id="pills-profileinfographics" role="tabpanel" aria-labelledby="pills-profileinfographics-tab">
-                                            <br>
-                                            <br>
-                                            <div class="row  my-2"></div>
-                                            <div class="row my-2">
-                                                {{> theme_moove/userinfographics }}
-                                            </div>
-                                            
-                                          </div>
-                                          <div class="tab-pane fade pt-1" id="details" role="tabpanel" aria-labelledby="details-tab">
-                                                {{#hasregionmainsettingsmenu}}
-                                                    <div class="region_main_settings_menu_proxy"></div>
-                                                {{/hasregionmainsettingsmenu}}
-
-                                                {{{ output.course_content_header }}}
-                                                {{{ output.main_content }}}
-                                                {{{ output.activity_navigation }}}
-                                                {{{ output.course_content_footer }}}
-                                            </div>
-                                        </div>
-                                        <!-- Main tabs end  -->
-                                    </div>
+                                    {{/usercanviewprofile}}
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-8">
+                            <section id="region-main" aria-label="{{#str}}content{{/str}}">
+                                {{{ output.main_content }}}
+                            </section>
+                        </div>
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
+
+        {{> theme_moove/footer }}
     </div>
+    {{{ output.standard_after_main_region_html }}}
 </div>
+
+</body>
+</html>
 {{#js}}
-require(['jquery', 'jqueryui'], function($) {
-    $('#pills-tab li:first-child a').tab('show');
-    $('#myTab li:first-child a').tab('show');
-    $('#progresscourseuser li:first-child a').tab('show');
-    return {};
-});
-
+    M.util.js_pending('theme_boost/loader');
+    require(['theme_boost/loader'], function(Loader) {
+        M.util.js_complete('theme_boost/loader');
+    });
 {{/js}}
-
-{{>theme_moove/inc_end}}

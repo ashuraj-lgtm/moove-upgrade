@@ -18,13 +18,11 @@
  * Accessibility API endpoints
  *
  * @package    theme_moove
- * @copyright  2020 Willian Mano - http://conecti.me
+ * @copyright  2022 Willian Mano {@link https://conecti.me}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace theme_moove\api;
-
-defined('MOODLE_INTERNAL') || die;
 
 use external_api;
 use external_function_parameters;
@@ -35,7 +33,7 @@ use external_value;
  * Accessibility API endpoints class
  *
  * @package    theme_moove
- * @copyright  2020 Willian Mano - http://conecti.me
+ * @copyright  2022 Willian Mano {@link https://conecti.me}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class accessibility extends external_api {
@@ -257,7 +255,7 @@ class accessibility extends external_api {
 
         set_user_preference('thememoovesettings_enableaccessibilitytoolbar', $enableaccessibilitytoolbar);
 
-        \core\notification::success(get_string('themesettinggsavedsuccessfully', 'theme_moove'));
+        \core\notification::success(get_string('themesettingg:successfullysaved', 'theme_moove'));
 
         return ['success' => true];
     }
