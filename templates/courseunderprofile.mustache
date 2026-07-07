@@ -1,0 +1,174 @@
+<p id="date_filter">
+    <span id="date-label-from" class="date-label">From: </span><input class="date_range_filter date" type="text" id="datepicker_from" />
+    <span id="date-label-to" class="date-label">To:<input class="date_range_filter date" type="text" id="datepicker_to" />
+</p>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <p class="text-justify p-2"> Are you sure you want to unenrol from this course? </p> 
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="confirm">Yes</button>
+                <button type="button" class="btn btn-success" data-dismiss="modal">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<table id="datatable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Course name </th>
+                <th>Enrolled on </th>
+                <th>Expiration date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#enrolledcourses}}
+            <tr>
+                <td>{{fullname}}</td>
+                <td>{{#enrolltime}} {{#userdate}} {{enrolltime}}, %m/%d/%Y {{/userdate}} {{/enrolltime}}</td>
+                <td>{{# enddate }} {{#userdate}} {{enddate}}, %m/%d/%Y {{/userdate}} {{/ enddate }}  </td>
+                <td>
+                    <span class="m-2 border text-primary text-center p-1"  id="" > <i class="fa fa-square" aria-hidden="true"></i> </span> 
+                    <span class="m-2 border text-primary text-center p-1"  id=""> <a href="{{config.wwwroot}}/course/view.php?id={{id}}"><i class="fa fa-eye" aria-hidden="true"></i></a> </span> 
+                    <span class="m-2 border text-primary text-center p-1 unenrolyourselffromcourse" data-course="{{id}}"> <i class="fa fa-undo"  aria-hidden="true"></i> </span> 
+                </td>
+            </tr>
+            {{/enrolledcourses}}
+            {{^enrolledcourses}}
+            <tr>
+                <p class="text-center"> Not enrolled in course </p>
+            </tr>
+            {{/enrolledcourses}}
+        </tbody>
+    </table>
+
+
+{{#js}}
+require(['jquery','core/modal_factory','jqueryui','datatables'], function($, ModalFactory) {
+    console.log("Loaded :)");
+       var oTable = $('#datatable').DataTable({
+        "oLanguage": {
+          "sSearch": "Search"
+        },
+        "iDisplayLength": -1,
+        "sPaginationType": "full_numbers",
+      });
+    
+ $("#datepicker_from").datepicker({
+    showOn: "button",
+    buttonImage: 'https://image.flaticon.com/icons/png/512/1142/1142792.png',
+    buttonImageOnly: false,
+    "onSelect": function(date) {
+      minDateFilter = new Date(date).getTime();
+      oTable.draw();
+    }
+  }).keyup(function() {
+    minDateFilter = new Date(this.value).getTime();
+    oTable.draw();
+  });
+
+ $("#datepicker_to").datepicker({
+    showOn: "button",
+    buttonImage: 'https://image.flaticon.com/icons/png/512/1142/1142792.png',
+    buttonImageOnly: false,
+    "onSelect": function(date) {
+      maxDateFilter = new Date(date).getTime();
+      oTable.draw();
+    }
+  }).keyup(function() {
+    maxDateFilter = new Date(this.value).getTime();
+    oTable.draw();
+  });
+
+  // Date range filter
+minDateFilter = "";
+maxDateFilter = "";
+
+$.fn.dataTableExt.afnFiltering.push(
+  function(oSettings, aData, iDataIndex) {
+    if (typeof aData._date == 'undefined') {
+      aData._date = new Date(aData[1]).getTime();
+    }
+
+    if (minDateFilter && !isNaN(minDateFilter)) {
+      if (aData._date < minDateFilter) {
+        return false;
+      }
+    }
+
+    if (maxDateFilter && !isNaN(maxDateFilter)) {
+      if (aData._date > maxDateFilter) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+);
+
+var courseid = null;
+var removerow = null;
+
+$('.unenrolyourselffromcourse').on('click', function(e) {
+    removerow = oTable.row( $(this).parents('tr'));
+ // console.log("row", oTable.row( $(this).parents('tr')).remove().draw());
+    courseid = $(this).data("course");
+    $('#myModal').modal('show');
+ });    
+
+$('#confirm').on('click', function(e) {
+
+        var form_data = new FormData();
+        form_data.append('courseid', courseid);
+            
+        if (courseid !=="" &&  typeof courseid !== "undefined") {
+            submitform = true;
+            $('#myModal').modal('hide');
+        }
+        if (submitform) {   
+            $.ajax({ 
+                type: 'POST',
+                url: '{{config.wwwroot}}/theme/moove/unenroluser.php',
+                data: form_data, 
+                success:function(data){
+                    if (data) {
+                            if (removerow) {
+                                removerow.remove().draw();
+                                removerow = null;
+                            }
+                        var data = JSON.parse(data);
+                        if (data.error !== null) {
+                        var trigger = $('#unenroluserfromcousres');
+                        ModalFactory.create({
+                            title: '',
+                            body: '<p class="updateusermessage">'+data.message+'</p>',
+                            footer: '',
+                          }, trigger)
+                          .then(function(modal) {
+                                    modal.show();
+                            oTable.draw();
+                        })
+                         .done(function(modal) {
+                            // Do what you want with your new modal.
+                         });
+                        }
+                    }
+                },
+                cache: false,
+                contentType: false,
+                processData: false 
+            })
+        }
+});
+    return {};
+});
+
+{{/js}}
+
+
+
+

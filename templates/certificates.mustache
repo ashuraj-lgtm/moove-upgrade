@@ -1,0 +1,110 @@
+<div class="modal fade" id="certificatemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+            <div class="modal-body text-center">
+                <div class="modaladdthml" id="modaladdthml"></div>
+                <button type="button" class="btn btn-success rounded my-2" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<h2 class="card-title">{{{ title }}}</h2>
+<h3 class="card-subtitle mb-2 text-muted">{{{ subtitle }}}</h3>
+
+
+<table class="table table-bordered" id="certificatestable">
+  <thead>
+    <tr>
+      <th scope="col"> S no. </th>
+      <th scope="col"> Course name</th>
+      <th scope="col"> Instructure </th>
+      <th scope="col"> Exam Score </th>
+      <th scope="col"> Status </th>
+      <th scope="col"> Action </th>
+    </tr>
+  </thead>
+  <tbody>
+    {{# hascourse}}
+    <tr data-status="{{statusint}}" data-course="{{ coursename }}">
+      <th>  </th>
+      <th> {{ coursename }} </th>
+      <th> {{#instructors}} 
+              <span> {{firstname}} {{lastname}} </span> 
+           {{/instructors}} 
+           {{^instructors }} 
+              No Instructor  
+            {{/instructors }} 
+      </th>
+      <th>  </th>
+      <th> {{#status}} {{status}} {{/status}}</th>
+      <th class="text-center">
+        {{#hascertificates}}
+          {{#coursescertificates}}
+                {{#certificates}}
+                <a  class="popupclick" data-cert="1" data-href="{{ downloadurl }}"> <i class="fa fa-eye" aria-hidden="true"></i> </a>
+                {{/certificates}}
+          {{/coursescertificates}}
+        {{/hascertificates }}
+        {{^hascertificates}}
+                <a  class="popupclick" data-cert="0"> <i class="fa fa-eye" aria-hidden="true"></i> </a>
+        {{/hascertificates}}
+      </th>
+    </tr>
+    {{/ hascourse}}
+    {{^ hascourse}}
+    <tr class="mergecells"> <th> {{#str}}nohavecertificates, theme_moove{{/str}}</th><th></th><th> </th><th></th><th></th><th></th></tr>
+    {{/ hascourse}}
+  </tbody>
+</table>
+
+{{#js}}
+require(['jquery','jqueryui','datatables'], function($) {
+  
+  $(".popupclick").click(function(){
+    var cert = $(this).data("cert");
+    if(cert == 0){
+        
+        var imagehtml = '<p class="text-center text-muted"> No certificate in this course </p>';
+        $("#modaladdthml").html(imagehtml);
+        $('#certificatemodal').modal('show');
+      
+      }else{
+            var row = $(this).closest("tr");
+            var downloaduserl = $(this).data("href");
+         
+         if (row.data('status') != 1) {
+            var imagehtml = '<p class="text-center text-muted"> You have not passed the examination, Please try again to get the certificate </p>';
+            $("#modaladdthml").html(imagehtml);
+            $('#certificatemodal').modal('show');
+         }else{
+            window.load = downloaduserl;
+         }
+
+      }
+
+  });
+  
+    var t = $('#certificatestable').DataTable( {
+        "columnDefs": [ {
+            "searchable": false,
+            "orderable": false,
+            "targets": 0
+        } ],
+        "order": [[ 1, 'asc' ]]
+    } );
+ 
+    t.on( 'order.dt search.dt', function () {
+        t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+            cell.innerHTML = i+1;
+        } );
+    } ).draw();
+
+
+    
+    return {};
+});
+
+{{/js}}

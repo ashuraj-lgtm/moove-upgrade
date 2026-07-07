@@ -1,0 +1,176 @@
+    {{#hasblocks}}
+        <i id="sidepreopen-control"
+            aria-expanded="{{#draweropenright}}true{{/draweropenright}}{{^draweropenright}}false{{/draweropenright}}"
+            aria-controls="sidepre-blocks"
+            data-action="toggle-drawer"
+            data-side="right"
+            data-preference="sidepre-open"
+            title="{{#str}} showhideblocks, theme_moove {{/str}}">
+        </i>
+
+        <section id="sidepre-blocks" data-region="blocks-column" class="hidden-print">
+            {{{ sidepreblocks }}}
+        </section>
+    {{/hasblocks}}
+
+    {{{ output.standard_after_main_region_html }}}
+
+    {{#hasdrawertoggle}}
+        {{> theme_moove/nav-drawer }}
+    {{/hasdrawertoggle}}
+</div><!-- Ends .page-wrapper -->
+
+<div class="modal fade" id="logoutmodal" tabindex="-1" role="dialog" aria-labelledby="logoutmodal" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+       Are you sure you want to log out
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success rounded confirmlogout">Yes</button>
+        <button type="button" class="btn btn-success rounded" data-dismiss="modal">No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{{> theme_moove/footer }}
+</body>
+</html>
+{{#js}}
+require(['theme_boost/loader']);
+
+require(['theme_boost/drawer'], function(mod) {
+    mod.init();
+});
+
+require(['jquery'], function($) {
+    $('.confirmlogout').click(function(e){
+     $('#logoutmodal').modal('hide');
+     var logouturl = $(".logoutbtnclick").data("logouturl");
+     window.location = logouturl; 
+    });
+});
+
+
+require(['theme_moove/metismenu', 'jquery'], function(metisMenu, $) {
+    $(".metismenu").metisMenu();
+});
+
+require([], function() {
+    var iconsearch = document.querySelector('.moove-search-input .slicon-magnifier');
+    var btnclosesearch = document.querySelector('.search-input-form .close-search');
+    var searchinputform = document.querySelector('.moove-search-input');
+
+    if (iconsearch) {
+
+        var togglesearchinputform = function() {
+            searchinputform.classList.toggle('expanded');
+        }
+
+        iconsearch.onclick = togglesearchinputform;
+        btnclosesearch.onclick = togglesearchinputform;
+    }
+});
+
+require(['theme_moove/accessibilitybar'], function(bar) {
+    bar.init();
+});
+
+require(['theme_moove/themesettings'], function(themesettings) {
+    themesettings.init();
+});
+
+
+
+requirejs.config({
+    appDir: ".",
+    baseUrl: "js",
+    paths: { 
+        'datatables': ['//cdn.datatables.net/1.10.21/js/jquery.dataTables', 'libs/jquery.dataTables']
+    },
+    shim: {
+        'datatables' : ['jquery']
+    }
+});
+
+requirejs.config({
+    paths: {
+        "mychartjs": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart"
+    }
+  });
+
+
+
+
+require(['jquery'], function($) {
+
+    $('#feedfile').change(function(e){
+        var filename = $('#feedfile').val().split('\\').pop();
+        $('#filelabelimage .filetext').contents().eq(0).replaceWith(filename);
+    });
+
+    $('#feedbackform').submit(function (e) {
+        e.preventDefault();
+        var  submitform = false;
+        var timeout = 2000;
+        var file_data = $('#feedfile').prop('files')[0];   
+        var subject = $('#feedsubject').val(); 
+        var message = $('#feedmessage').val();
+        var form_data = new FormData();
+
+        form_data.append('file', file_data);
+        form_data.append('message', message);
+        form_data.append('subject', subject);    
+            
+        if (message !=="" &&  subject !== "" && typeof message !== "undefined" && typeof subject !== "undefined" ) {
+            submitform = true;
+        }else{
+            if (!(message !=="")) {
+                /* Message is empty */
+                $(".feedbackform").append('<div class="alert alert-warning"> Message field empty </div>');
+                 setTimeout(function(){  $(".alert").alert('close')  }, timeout);
+            }
+            if (!(subject !=="")) {
+                /* Subect is empty */
+                $(".feedbackform").append('<div class="alert alert-warning"> Subject field empty </div>');
+                setTimeout(function(){  $(".alert").alert('close')  }, timeout);
+            }
+        }
+        if (submitform) {   
+            $.ajax({ 
+                type: 'POST',
+                url: '{{config.wwwroot}}/theme/moove/contact_support.php',
+                data: form_data, 
+                success:function(data){
+                    var data = JSON.parse(data);
+                    console.log("some message ", data ,data.error);
+                    if (data.error == 0) {
+                         $('#filelabelimage .filetext').contents().eq(0).replaceWith(" Upload a file ");
+                         $('#feedfile').val("");
+                         $('#feedsubject').val("");
+                         $('#feedmessage').val("");
+
+                         $(".feedbackform").append('<div class="alert alert-success"><strong>'+ data.message+'</strong></div>');
+                         setTimeout(function(){ $(".alert").alert('close')  }, timeout);
+                    }
+                    if (data.error == 1) {
+                     $(".feedbackform").append('<div class="alert alert-warning"><strong>'+ data.message+'</strong></div>');
+                         setTimeout(function(){ $(".alert").alert('close')  }, timeout);   
+                    }
+                },
+                cache: false,
+                contentType: false,
+                processData: false 
+            })
+        }
+    });
+
+    $(".helpclose").click(function(){
+	  console.log("button clicked");
+	});
+
+});
+
+{{/js}}
