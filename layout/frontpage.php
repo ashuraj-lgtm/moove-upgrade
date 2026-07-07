@@ -17,112 +17,142 @@
 /**
  * Frontpage layout for the moove theme.
  *
- * @package    theme_moove
- * @copyright  2022 Willian Mano {@link https://conecti.me}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   theme_moove
+ * @copyright 2017 Willian Mano - http://conecti.me
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->libdir . '/behat/lib.php');
-require_once($CFG->dirroot . '/course/lib.php');
-
-// Add block button in editing mode.
-$addblockbutton = $OUTPUT->addblockbutton();
+require_login();
 
 user_preference_allow_ajax_update('drawer-open-nav', PARAM_ALPHA);
-user_preference_allow_ajax_update('drawer-open-index', PARAM_BOOL);
-user_preference_allow_ajax_update('drawer-open-block', PARAM_BOOL);
+user_preference_allow_ajax_update('sidepre-open', PARAM_ALPHA);
+
+require_once($CFG->libdir . '/behat/lib.php');
+
+$extraclasses = [];
+
+$themesettings = new \theme_moove\util\theme_settings();
 
 if (isloggedin()) {
-    $courseindexopen = (get_user_preferences('drawer-open-index', true) == true);
-    $blockdraweropen = (get_user_preferences('drawer-open-block') == true);
-} else {
-    $courseindexopen = false;
-    $blockdraweropen = false;
-}
+    $blockshtml = $OUTPUT->blocks('side-pre');
+    $hasblocks = strpos($blockshtml, 'data-block=') !== false;
 
-if (defined('BEHAT_SITE_RUNNING')) {
-    $blockdraweropen = true;
-}
+    $navdraweropen = (get_user_preferences('drawer-open-nav', 'true') == 'true');
+    $draweropenright = (get_user_preferences('sidepre-open', 'true') == 'true');
 
-$extraclasses = ['uses-drawers'];
-if ($courseindexopen) {
-    $extraclasses[] = 'drawer-open-index';
-}
-
-$blockshtml = $OUTPUT->blocks('side-pre');
-$hasblocks = (strpos($blockshtml, 'data-block=') !== false || !empty($addblockbutton));
-if (!$hasblocks) {
-    $blockdraweropen = false;
-}
-$courseindex = core_course_drawer();
-if (!$courseindex) {
-    $courseindexopen = false;
-}
-
-$forceblockdraweropen = $OUTPUT->firstview_fakeblocks();
-
-$secondarynavigation = false;
-$overflow = '';
-if ($PAGE->has_secondary_navigation()) {
-    $secondary = $PAGE->secondarynav;
-
-    if ($secondary->get_children_key_list()) {
-        $tablistnav = $PAGE->has_tablist_secondary_navigation();
-        $moremenu = new \core\navigation\output\more_menu($PAGE->secondarynav, 'nav-tabs', true, $tablistnav);
-        $secondarynavigation = $moremenu->export_for_template($OUTPUT);
-        $extraclasses[] = 'has-secondarynavigation';
+    if ($navdraweropen) {
+        $extraclasses[] = 'drawer-open-left';
     }
 
-    $overflowdata = $PAGE->secondarynav->get_overflow_menu_data();
-    if (!is_null($overflowdata)) {
-        $overflow = $overflowdata->export_for_template($OUTPUT);
+    if ($draweropenright && $hasblocks) {
+        $extraclasses[] = 'drawer-open-right';
     }
-}
 
-$primary = new core\navigation\output\primary($PAGE);
-$renderer = $PAGE->get_renderer('core');
-$primarymenu = $primary->export_for_template($renderer);
-$buildregionmainsettings = !$PAGE->include_region_main_settings_in_header_actions() && !$PAGE->has_secondary_navigation();
-// If the settings menu will be included in the header then don't add it here.
-$regionmainsettingsmenu = $buildregionmainsettings ? $OUTPUT->region_main_settings_menu() : false;
+    $bodyattributes = $OUTPUT->body_attributes($extraclasses);
+    $regionmainsettingsmenu = $OUTPUT->region_main_settings_menu();
+    $templatecontext = [
+        'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
+        'output' => $OUTPUT,
+        'sidepreblocks' => $blockshtml,
+        'hasblocks' => $hasblocks,
+        'bodyattributes' => $bodyattributes,
+        'hasdrawertoggle' => true,
+        'navdraweropen' => $navdraweropen,
+        'draweropenright' => $draweropenright,
+        'regionmainsettingsmenu' => $regionmainsettingsmenu,
+        'hasregionmainsettingsmenu' => !empty($regionmainsettingsmenu)
+    ];
 
-$header = $PAGE->activityheader;
-$headercontent = $header->export_for_template($renderer);
+    // Improve boost navigation.
+    theme_moove_extend_flat_navigation($PAGE->flatnav);
 
-$bodyattributes = $OUTPUT->body_attributes($extraclasses);
+    $templatecontext['flatnavigation'] = $PAGE->flatnav;
 
-$templatecontext = [
-    'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
-    'output' => $OUTPUT,
-    'sidepreblocks' => $blockshtml,
-    'hasblocks' => $hasblocks,
-    'bodyattributes' => $bodyattributes,
-    'courseindexopen' => $courseindexopen,
-    'blockdraweropen' => $blockdraweropen,
-    'courseindex' => $courseindex,
-    'primarymoremenu' => $primarymenu['moremenu'],
-    'secondarymoremenu' => $secondarynavigation ?: false,
-    'mobileprimarynav' => $primarymenu['mobileprimarynav'],
-    'usermenu' => $primarymenu['user'],
-    'langmenu' => $primarymenu['lang'],
-    'forceblockdraweropen' => $forceblockdraweropen,
-    'regionmainsettingsmenu' => $regionmainsettingsmenu,
-    'hasregionmainsettingsmenu' => !empty($regionmainsettingsmenu),
-    'overflow' => $overflow,
-    'headercontent' => $headercontent,
-    'addblockbutton' => $addblockbutton
-];
-
-$themesettings = new \theme_moove\util\settings();
-
-$templatecontext = array_merge($templatecontext, $themesettings->footer());
-
-if (isloggedin()) {
-    echo $OUTPUT->render_from_template('theme_moove/drawers', $templatecontext);
-} else {
-    $templatecontext = array_merge($templatecontext, $themesettings->frontpage());
+    $templatecontext = array_merge($templatecontext, $themesettings->footer_items(), $themesettings->slideshow());
 
     echo $OUTPUT->render_from_template('theme_moove/frontpage', $templatecontext);
+} else {
+    $sliderfrontpage = false;
+    if ((theme_moove_get_setting('sliderenabled', true) == true) && (theme_moove_get_setting('sliderfrontpage', true) == true)) {
+        $sliderfrontpage = true;
+        $extraclasses[] = 'slideshow';
+    }
+
+    $numbersfrontpage = false;
+    if (theme_moove_get_setting('numbersfrontpage', true) == true) {
+        $numbersfrontpage = true;
+    }
+
+    $sponsorsfrontpage = false;
+    if (theme_moove_get_setting('sponsorsfrontpage', true) == true) {
+        $sponsorsfrontpage = true;
+    }
+
+    $clientsfrontpage = false;
+    if (theme_moove_get_setting('clientsfrontpage', true) == true) {
+        $clientsfrontpage = true;
+    }
+
+    $bannerheading = '';
+    if (!empty($PAGE->theme->settings->bannerheading)) {
+        $bannerheading = theme_moove_get_setting('bannerheading', true);
+    }
+
+    $bannercontent = '';
+    if (!empty($PAGE->theme->settings->bannercontent)) {
+        $bannercontent = theme_moove_get_setting('bannercontent', true);
+    }
+
+    $shoulddisplaymarketing = false;
+    if (theme_moove_get_setting('displaymarketingbox', true) == true) {
+        $shoulddisplaymarketing = true;
+    }
+
+    $disablefrontpageloginbox = false;
+    if (theme_moove_get_setting('disablefrontpageloginbox', true) == true) {
+        $disablefrontpageloginbox = true;
+        $extraclasses[] = 'disablefrontpageloginbox';
+    }
+
+    $bodyattributes = $OUTPUT->body_attributes($extraclasses);
+    $regionmainsettingsmenu = $OUTPUT->region_main_settings_menu();
+
+    $templatecontext = [
+        'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
+        'output' => $OUTPUT,
+        'bodyattributes' => $bodyattributes,
+        'hasdrawertoggle' => false,
+        'canloginasguest' => $CFG->guestloginbutton and !isguestuser(),
+        'cansignup' => $CFG->registerauth == 'email' || !empty($CFG->registerauth),
+        'bannerheading' => $bannerheading,
+        'bannercontent' => $bannercontent,
+        'shoulddisplaymarketing' => $shoulddisplaymarketing,
+        'sliderfrontpage' => $sliderfrontpage,
+        'numbersfrontpage' => $numbersfrontpage,
+        'sponsorsfrontpage' => $sponsorsfrontpage,
+        'clientsfrontpage' => $clientsfrontpage,
+        'disablefrontpageloginbox' => $disablefrontpageloginbox,
+        'logintoken' => \core\session\manager::get_login_token()
+    ];
+
+    $templatecontext = array_merge($templatecontext, $themesettings->footer_items(), $themesettings->marketing_items());
+
+    if ($sliderfrontpage) {
+        $templatecontext = array_merge($templatecontext, $themesettings->slideshow());
+    }
+
+    if ($numbersfrontpage) {
+        $templatecontext = array_merge($templatecontext, $themesettings->numbers());
+    }
+
+    if ($sponsorsfrontpage) {
+        $templatecontext = array_merge($templatecontext, $themesettings->sponsors());
+    }
+
+    if ($clientsfrontpage) {
+        $templatecontext = array_merge($templatecontext, $themesettings->clients());
+    }
+
+    echo $OUTPUT->render_from_template('theme_moove/frontpage_guest', $templatecontext);
 }

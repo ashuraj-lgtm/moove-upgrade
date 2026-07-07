@@ -18,7 +18,7 @@
  * Moove.
  *
  * @package    theme_moove
- * @copyright  2022 Willian Mano - https://conecti.me
+ * @copyright  2017 Willian Mano - conecti.me
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -30,18 +30,18 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'theme_moove';
 
 // This is the version of the plugin.
-$plugin->version = 2022112801;
+$plugin->version = 2020042000;
 
 // This is the named version.
-$plugin->release = '4.1.1';
+$plugin->release = '3.8.11';
 
 // This is a stable release.
 $plugin->maturity = MATURITY_STABLE;
 
 // This is the version of Moodle this plugin requires.
-$plugin->requires = 2022112800;
+$plugin->requires = 2019111200;
 
 // This is a list of plugins, this plugin depends on (and their versions).
 $plugin->dependencies = [
-    'theme_boost' => 2022041900
+    'theme_boost' => 2019111800
 ];

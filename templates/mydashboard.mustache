@@ -1,0 +1,265 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template theme_moove/columns2
+
+    Admin time setting template.
+
+    Moove 2 column layout template.
+
+    Context variables required for this template:
+    * sitename - The name of the site
+    * output - The core renderer for the page
+    * bodyattributes - attributes for the body tag as a string of html attributes
+    * sidepreblocks - HTML for the blocks
+    * hasblocks - true if there are blocks on this page
+    * navdraweropen - true if the nav drawer should be open on page load
+    * regionmainsettingsmenu - HTML for the region main settings menu
+    * hasregionmainsettingsmenu - There is a region main settings menu on this page.
+
+    Example context (json):
+    {
+        "sitename": "Moodle",
+        "output": {
+            "doctype": "<!DOCTYPE html>",
+            "page_title": "Test page",
+            "favicon": "favicon.ico",
+            "main_content": "<h1>Headings make html validators happier</h1>"
+         },
+        "bodyattributes":"",
+        "sidepreblocks": "<h2>Blocks html goes here</h2>",
+        "hasblocks":true,
+        "navdraweropen":true,
+        "regionmainsettingsmenu": "",
+        "hasregionmainsettingsmenu": false
+    }
+}}
+    {{>theme_moove/inc_start}}
+<div class="newclasstosetpage">
+    <div id="page" class="container-fluid">
+        <div class="customheader">
+            <h1 class="h1"> Home </h1>
+        </div>
+        <div id="page-content" class="row">
+
+            <div id="region-main-box" class="col-md-9">
+        {{#is_siteadmin}}
+            {{>theme_moove/mydashboard_student}}
+        {{/is_siteadmin}}
+        {{^is_siteadmin}}
+            <!-- {{{ output.full_header }}} -->
+        {{>theme_moove/mydashboard_student}}
+        {{/is_siteadmin}}
+                {{#hasregionmainsettingsmenu}}
+                <div id="region-main-settings-menu" class="hidden-print">
+                    <div> {{{ output.region_main_settings_menu }}} </div>
+                </div>
+                {{/hasregionmainsettingsmenu}}
+                <section id="region-main">
+                    <div class="card mymaincontent">
+                        <div class="card-body">
+                            {{#hasregionmainsettingsmenu}}
+                                <div class="region_main_settings_menu_proxy"></div>
+                            {{/hasregionmainsettingsmenu}}
+                            {{{ output.course_content_header }}}
+                            {{{ output.main_content }}}
+                            {{{ output.course_content_footer }}}
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="col-md-3">
+                 {{#hasblocks}}
+                    <i id="sidepreopen-control"
+                        aria-expanded="{{#draweropenright}}true{{/draweropenright}}{{^draweropenright}}false{{/draweropenright}}"
+                        aria-controls="sidepre-blocks"
+                        data-action="toggle-drawer"
+                        data-side="right"
+                        data-preference="sidepre-open"
+                        title="{{#str}} showhideblocks, theme_moove {{/str}}">
+                    </i>
+                    <section id="sidepre-blocks" data-region="blocks-column" class="hidden-print">
+                        {{{ sidepreblocks }}}
+                    </section>
+                {{/hasblocks}}
+            </div>
+        </div>
+    </div>
+    <!-- Footer section for dashboard -->
+</div>
+    {{{ output.standard_after_main_region_html }}}
+    {{#hasdrawertoggle}}
+        {{> theme_moove/nav-drawer }}
+    {{/hasdrawertoggle}}
+</div><!-- Ends .page-wrapper -->
+
+<div class="modal fade" id="logoutmodal" tabindex="-1" role="dialog" aria-labelledby="logoutmodal" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+       Are you sure you want to log out
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success rounded confirmlogout">Yes</button>
+        <button type="button" class="btn btn-success rounded" data-dismiss="modal">No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{> theme_moove/footer }}
+</body>
+</html>
+{{#js}}
+require(['theme_boost/loader']);
+
+require(['theme_boost/drawer'], function(mod) {
+    mod.init();
+});
+
+require(['jquery'], function($) {
+    $('.confirmlogout').click(function(e){
+     $('#logoutmodal').modal('hide');
+     var logouturl = $(".logoutbtnclick").data("logouturl");
+     window.location = logouturl; 
+    });
+});
+
+
+require(['theme_moove/metismenu', 'jquery'], function(metisMenu, $) {
+    $(".metismenu").metisMenu();
+});
+
+require([], function() {
+    var iconsearch = document.querySelector('.moove-search-input .slicon-magnifier');
+    var btnclosesearch = document.querySelector('.search-input-form .close-search');
+    var searchinputform = document.querySelector('.moove-search-input');
+
+    if (iconsearch) {
+
+        var togglesearchinputform = function() {
+            searchinputform.classList.toggle('expanded');
+        }
+
+        iconsearch.onclick = togglesearchinputform;
+        btnclosesearch.onclick = togglesearchinputform;
+    }
+});
+
+require(['theme_moove/accessibilitybar'], function(bar) {
+    bar.init();
+});
+
+require(['theme_moove/themesettings'], function(themesettings) {
+    themesettings.init();
+});
+
+
+
+requirejs.config({
+    appDir: ".",
+    baseUrl: "js",
+    paths: { 
+        'datatables': ['//cdn.datatables.net/1.10.21/js/jquery.dataTables', 'libs/jquery.dataTables']
+    },
+    shim: {
+        'datatables' : ['jquery']
+    }
+});
+
+requirejs.config({
+    paths: {
+        "mychartjs": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart"
+    }
+  });
+
+
+
+
+require(['jquery'], function($) {
+
+    $('#feedfile').change(function(e){
+        var filename = $('#feedfile').val().split('\\').pop();
+        $('#filelabelimage .filetext').contents().eq(0).replaceWith(filename);
+    });
+
+    $('#feedbackform').submit(function (e) {
+        e.preventDefault();
+        var  submitform = false;
+        var timeout = 2000;
+        var file_data = $('#feedfile').prop('files')[0];   
+        var subject = $('#feedsubject').val(); 
+        var message = $('#feedmessage').val();
+        var form_data = new FormData();
+
+        form_data.append('file', file_data);
+        form_data.append('message', message);
+        form_data.append('subject', subject);    
+            
+        if (message !=="" &&  subject !== "" && typeof message !== "undefined" && typeof subject !== "undefined" ) {
+            submitform = true;
+        }else{
+            if (!(message !=="")) {
+                /* Message is empty */
+                $(".feedbackform").append('<div class="alert alert-warning"> Message field empty </div>');
+                 setTimeout(function(){  $(".alert").alert('close')  }, timeout);
+            }
+            if (!(subject !=="")) {
+                /* Subect is empty */
+                $(".feedbackform").append('<div class="alert alert-warning"> Subject field empty </div>');
+                setTimeout(function(){  $(".alert").alert('close')  }, timeout);
+            }
+        }
+        if (submitform) {   
+            $.ajax({ 
+                type: 'POST',
+                url: '{{config.wwwroot}}/theme/moove/contact_support.php',
+                data: form_data, 
+                success:function(data){
+                    var data = JSON.parse(data);
+                    console.log("some message ", data ,data.error);
+                    if (data.error == 0) {
+                         $('#filelabelimage .filetext').contents().eq(0).replaceWith(" Upload a file ");
+                         $('#feedfile').val("");
+                         $('#feedsubject').val("");
+                         $('#feedmessage').val("");
+
+                         $(".feedbackform").append('<div class="alert alert-success"><strong>'+ data.message+'</strong></div>');
+                         setTimeout(function(){ $(".alert").alert('close')  }, timeout);
+                    }
+                    if (data.error == 1) {
+                     $(".feedbackform").append('<div class="alert alert-warning"><strong>'+ data.message+'</strong></div>');
+                         setTimeout(function(){ $(".alert").alert('close')  }, timeout);   
+                    }
+                },
+                cache: false,
+                contentType: false,
+                processData: false 
+            })
+        }
+    });
+
+    $(".helpclose").click(function(){
+      console.log("button clicked");
+    });
+
+});
+
+{{/js}}
+
+
+
