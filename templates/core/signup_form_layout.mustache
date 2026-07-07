@@ -10,7 +10,17 @@
 }}
 <div class="container-fluid">
     <div class="row row justify-content-center">
-        <div class="col-12 col-md-8 col-lg-5 align-self-center">
+        <div class="col-8">
+
+            <div class="text-center">
+                {{#logourl}}
+                    <h2><img src="{{logourl}}" title="{{sitename}}" alt="{{sitename}}"/></h2>
+                {{/logourl}}
+                {{^logourl}}
+                    <h2>{{sitename}}</h2>
+                {{/logourl}}
+            </div>
+
             <div class="card my-4">
                 <div class="card-block">
                     <div class="card-title">

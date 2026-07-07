@@ -30,15 +30,11 @@ $bodyattributes = $OUTPUT->body_attributes($extraclasses);
 $templatecontext = [
     'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
     'output' => $OUTPUT,
-    'bodyattributes' => $bodyattributes,
-    'catalogueurl' => $CFG->wwwroot.'/local/catalogue/index.php',
+    'bodyattributes' => $bodyattributes
 ];
-if ($OUTPUT->get_logo()) {
-	$templatecontext['logingpagelogo'] = $OUTPUT->get_logo();
-}
+
 if ($this->page->pagetype == 'login-signup') {
     $templatecontext['logourl'] = $OUTPUT->get_logo();
 }
-
 
 echo $OUTPUT->render_from_template('theme_moove/login', $templatecontext);

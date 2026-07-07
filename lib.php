@@ -39,10 +39,6 @@ function theme_moove_get_extra_scss($theme) {
 
     $scss .= theme_moove_set_loginbgimg($theme);
 
-    $scss .= theme_moove_set_signupbgimg($theme);
-
-    $scss .= theme_moove_set_homebgimg($theme);
-
     return $scss;
 }
 
@@ -97,60 +93,14 @@ function theme_moove_set_loginbgimg($theme) {
 
     $loginbgimg = $theme->setting_file_url('loginbgimg', 'loginbgimg');
 
-
     if (is_null($loginbgimg)) {
         $loginbgimg = $OUTPUT->image_url('login_bg', 'theme');
     }
-
 
     $headercss = "#page-login-index.moove-login #page-wrapper #page {background-image: url('$loginbgimg');}";
 
     return $headercss;
 }
-
-
-/**
- * Adds the signup page background image to CSS.
- *
- * @param theme_config $theme The theme config object.
- * @return string
- */
-function theme_moove_set_signupbgimg($theme) {
-    global $OUTPUT;
-
-    $loginbgimg = $theme->setting_file_url('loginbgimg', 'loginbgimg');
-
-    if (is_null($loginbgimg)) {
-        $loginbgimg = $OUTPUT->image_url('login_bg', 'theme');
-    }
-
-    $headercss = "#page-login-signup.moove-login #page-wrapper #page {background-image: url('$loginbgimg');}";
-
-    return $headercss;
-}
-
-/**
- * Adds the Home page background image to CSS.
- *
- * @param theme_config $theme The theme config object.
- * @return string
- */
-
-function theme_moove_set_homebgimg($theme) {
-    global $OUTPUT;
-
-    $loginbgimg = $theme->setting_file_url('loginbgimg', 'loginbgimg');
-
-    if (is_null($loginbgimg)) {
-        $loginbgimg = $OUTPUT->image_url('login_bg', 'theme');
-    }
-
-    $headercss = "#page-my-index {background-image: url('$loginbgimg');}";
-
-    return $headercss;
-}
-
-
 
 /**
  * Returns the main SCSS content.
@@ -359,7 +309,7 @@ function theme_moove_add_certificatesmenuitem(\flat_navigation $flatnav) {
             return;
         }
 
-        if ( !empty($parentitem) && !is_null($parentitem->parent)) {
+        if (!is_null($parentitem->parent)) {
             $certificatesitemoptions = [
                 'action' => $actionurl,
                 'text' => get_string('certificates', 'theme_moove'),

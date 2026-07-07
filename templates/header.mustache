@@ -52,33 +52,17 @@
         <!-- page_heading_menu -->
         {{{ output.page_heading_menu }}}
     </ul>
-
     <ul class="nav navbar-nav ml-auto">
+        <div class="d-none d-lg-block">
+            {{{ output.search_box }}}
+        </div>
+
         <li class="nav-item lang-menu">
             {{{ output.render_lang_menu }}}
         </li>
-        <div class="d-none">
-            {{{ output.search_box }}}
-        </div>
-        {{{ output.gradepointuser }}}
-        {{{ output.loggeruserdetail }}}
-        {{{ output.messageuser }}}
-        {{{ output.helpmenu }}}
-        {{# output.helpmenu }}
-            <li class="nav-item">
-                <form id="searchform" action="/course/search.php" method="get">
-                    <div class="input-group">
-                        <div class="input-group-append">
-                            <div class="btn btn-outline-secondary"  id="button-addon2"><i class="fa fa-search"></i></div>
-                        </div>
-                        <input type="text" id="shortsearchbox" size="12" name="search" value="" class="form-control" placeholder="{{# str }} search, theme_moove {{/ str }}" aria-label="Search" aria-describedby="button-addon2">
-                    </div>
-                </form>
-            </li>
-        {{/ output.helpmenu }}
-        {{{ output.customlilogout }}}
-        {{{ output.navbar_plugin_output }}}
-        <!-- {{{ output.user_menu }}} -->
 
+        {{{ output.navbar_plugin_output }}}
+
+        {{{ output.user_menu }}}
     </ul>
 </nav>

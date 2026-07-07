@@ -51,7 +51,8 @@ $string['totalusers'] = 'Active / Suspended users';
 $string['totalcourses'] = 'Total courses';
 $string['onlineusers'] = 'Online users(last 5 minutes)';
 $string['showhideblocks'] = 'Show/hide blocks';
-$string['privacy:metadata'] = 'The Moove theme does not store any personal data about any user.';
+$string['prev_activity'] = 'Previous activity';
+$string['next_activity'] = 'Next activity';
 
 // General settings tab.
 $string['generalsettings'] = 'General';
@@ -209,14 +210,14 @@ $string['facebook'] = 'Facebook URL';
 $string['facebookdesc'] = 'Enter the URL of your Facebook. (i.e http://www.facebook.com/moodlehq)';
 $string['twitter'] = 'Twitter URL';
 $string['twitterdesc'] = 'Enter the URL of your twitter. (i.e http://www.twitter.com/moodlehq)';
-$string['googleplus'] = 'Google Plus URL';
-$string['googleplusdesc'] = 'Enter the URL of your Google Plus. (i.e http://www.googleplus.com/moodlehq)';
 $string['linkedin'] = 'Linkedin URL';
 $string['linkedindesc'] = 'Enter the URL of your Linkedin. (i.e http://www.linkedin.com/moodlehq)';
 $string['youtube'] = 'Youtube URL';
 $string['youtubedesc'] = 'Enter the URL of your Youtube. (i.e https://www.youtube.com/user/moodlehq)';
 $string['instagram'] = 'Instagram URL';
 $string['instagramdesc'] = 'Enter the URL of your Instagram. (i.e https://www.instagram.com/moodlehq)';
+$string['whatsapp'] = 'Whatsapp number';
+$string['whatsappdesc'] = 'Enter your whatsapp number for contact.';
 $string['topfooterimg'] = 'Footer image';
 $string['topfooterimgdesc'] = 'Upload your custom footer image here if you want to replace the default image. Recommended size is 1500px x 400px or higher.';
 $string['disablebottomfooter'] = 'Disable bottom footer';
@@ -277,38 +278,3 @@ $string['privacy:accessibilitystyles_fontsizeclass'] = 'The current preference f
 $string['privacy:accessibilitystyles_sitecolorclass'] = 'The current preference for the site color is: {$a}.';
 $string['privacy:thememoovesettings_fonttype'] = 'The current preference for the font type is: {$a}.';
 $string['privacy:thememoovesettings_enableaccessibilitytoolbar'] = 'The current preference for enable accessibility toolbar is to show it.';
-
-// Dashbaord page Student tiles 
-$string['studentcourseinprogress'] = 'Courses in progress';
-$string['studentcoursecompleted'] = 'Completed course';
-$string['studentcoursetrainingtime'] = 'Training time';
-$string['studentbadges'] = 'Badges';
-$string['studentgradepoints'] = 'Points';
-/* user profile page */
-$string['profileinfo'] = 'Info';
-$string['profilecourses'] = 'Courses';
-$string['profilegroups'] = 'Groups';
-$string['profilefile'] = 'File';
-$string['profileprofile'] = 'Profile';
-$string['profileprogress'] = 'Progress';
-$string['profileinfographics'] = 'Infographic';
-$string['profileprogressoverview'] = 'Overview';
-$string['profileprogresscourses'] = 'Courses';
-$string['profileprogressbadges'] = 'Badges';
-
-/* Update user profile */
-$string['placeholderpassword'] = "Blank to leave unchange";
-$string['updatename'] = "Name";
-$string['updateemail'] = "Email";
-$string['updateusername'] = "User name";
-$string['updatepassword'] = "Password";
-$string['updatebio'] = "Bio";
-$string['updatemainbuttom'] = "Update user";
-$string['updatecancelbtn'] = "Cancel";
-
-$string['help'] = 'Help';
-$string['search'] = 'Search';
-$string['searchbycourse'] = 'Search by Course ';
-
-
-

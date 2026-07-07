@@ -51,7 +51,8 @@ $string['totalusers'] = 'Usuários ativos / Suspensos';
 $string['totalcourses'] = 'Total de cursos';
 $string['onlineusers'] = 'Usuários online(5 minutos)';
 $string['showhideblocks'] = 'Exibir/ocultar blocos';
-$string['privacy:metadata'] = 'O tema Moove theme não guarda qualquer informação pessoal de qualquer usuário.';
+$string['prev_activity'] = 'Atividade anterior';
+$string['next_activity'] = 'Próxima atividade';
 
 // General settings tab.
 $string['generalsettings'] = 'Geral';
@@ -209,14 +210,14 @@ $string['facebook'] = 'Facebook URL';
 $string['facebookdesc'] = 'Digite a URL do Facebook. (ex: http://www.facebook.com/moodlehq)';
 $string['twitter'] = 'Twitter URL';
 $string['twitterdesc'] = 'Digite a URL do twitter. (ex: http://www.twitter.com/moodlehq)';
-$string['googleplus'] = 'Google Plus URL';
-$string['googleplusdesc'] = 'Digite a URL do Google Plus. (ex: http://www.googleplus.com/moodlehq)';
 $string['linkedin'] = 'Linkedin URL';
 $string['linkedindesc'] = 'Digite a URL do Linkedin. (ex: http://www.linkedin.com/moodlehq)';
 $string['youtube'] = 'Youtube URL';
 $string['youtubedesc'] = 'Digite a URL do Youtube. (ex: https://www.youtube.com/user/moodlehq)';
 $string['instagram'] = 'Instagram URL';
 $string['instagramdesc'] = 'Digite a URL do Instagram. (i.e https://www.instagram.com/moodlehq)';
+$string['whatsapp'] = 'Whatsapp';
+$string['whatsappdesc'] = 'Digite o número do seu whatsapp para contato.';
 $string['topfooterimg'] = 'Imagem do rodapé';
 $string['topfooterimgdesc'] = 'Envie sua própria imagem de rodapé caso queira substituir a imagem padrão. Tamanho recomendado 1500px x 400px ou maior.';
 $string['disablebottomfooter'] = 'Desabilitar rodapé do final da página';

@@ -3,77 +3,14 @@
     display: block;
     width: 100%;
   }
-
-#page-my-index{
-  padding: 0;
-}
-.coursesection {
-    width: 100%!important;
-}
-.navbar-expand .navbar-nav {
-    display: flex;
-    align-items: center;
-}
-body#page-my-index nav ul.nav.navbar-nav.ml-auto li.nav-link.userlinkprofile:nth-of-type(3) {
-
-  margin-top: 0!important;
-}
-nav.navbar ul.navbar-nav .lang-menu{
-  padding: 0;
-}
-nav.navbar .drawer-toggle{
-  width: unset;
-  padding: 0;
-}
-input#shortsearchbox {
-    width: 75px;
-}
-.navbar-expand .navbar-nav .nav-link{
-  padding: 0;
-}
-nav.navbar ul.navbar-nav li, nav.navbar ul.navbar-nav .nav-item {
-    list-style-type: none;
-    margin: auto 6px!important;
-}
-nav.navbar ul.navbar-nav .popover-region .popover-region-toggle {
-    width: 45px;
-    }
-    div#action-menu-1-menubar {
-    padding-left: 0px!important;
-}
-li.nav-link a.btn.btn-success {
-    padding: 4px;
 }
 
-
-h3.h3 {
-    padding-left: 15px;
+@media (min-width: 576px) {
+  .modal-dialog {
+    max-width: 50%;
+  }
 }
 
-.border strong.my-2 {
-    padding-left: 15px;
-}
-.nav-link {
-    display: block;
-    padding:3px 6px;
-}
-#page-my-index #page .sortables li.nav-item {
-    min-height: 30px;
-    }
-    .studentinfos .row.my-2>.col-md {
-    width: 50%;
-}
-#page-my-index .studentinfos .col-md .studentinnerbox .inner h3 {
-    font-size: 1.15em;
-}
-#page-my-index {
-     background-position: unset; 
-     -webkit-background-size: unset; 
-     background-size: unset;
-}
-
-
-}
 @media (max-width: 767px) {
   h1 {
     font-size: 1.634375rem;
@@ -278,7 +215,7 @@ h3.h3 {
   }
 
   .pagelayout-mydashboard .card-deck .card {
-    flex-basis: calc(33% - .5rem);
+    flex-basis: calc(50% - .5rem);
   }
 }
 
@@ -336,51 +273,4 @@ h3.h3 {
   #page-site-index.notloggedin:not(.disablefrontpageloginbox) .btn-login-top {
     display: none;
   }
-}
-
-
-@media only screen and (max-width: 768px) {
- .coursesection {
-    width: 340px;
-    display: inline-block;
-}
-section#inst165 .card-body.p-3 {
-    padding: 0!important;
-}
-nav ul.nav.navbar-nav.ml-auto li.nav-link.userlinkprofile:nth-of-type(3) {
-    margin-top: 16px!important;
-    padding: 0px!important;
-}
-.navbar-expand .navbar-nav .nav-link{
-  padding-right: 0px;
-}
-nav.navbar ul.navbar-nav .lang-menu .nav-item {
-    line-height: 5px;
-}
-#page {
-    margin-top: 120px;
-}
-nav.navbar {
-    min-height: 123px;
-
-    }
-    #page-my-index #page {
-    margin-top: 6.5rem;
-}
-nav.navbar ul.navbar-nav .popover-region {
-    margin-right: 0;
-    max-height: 40px;
-}
-nav.navbar ul.navbar-nav .popover-region .popover-region-toggle .count-container {
-    top: 0px;
-
-}
-nav.navbar ul.navbar-nav .popover-region .popover-region-toggle {
-  line-height: 36px;
-}
-
-div#action-menu-1-menubar {
-    padding-left: 8px;
-
-}
 }

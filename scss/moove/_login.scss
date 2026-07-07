@@ -1,29 +1,6 @@
 #page-login-index.moove-login {
-    background-color: #ffffff;
+    background-color: #f1f1f1;
     margin-left: 0;
-
-    .forgetpass p a {
-        color: #676767;
-        text-decoration: none;
-    }
-
-    .login-upper-header {
-    padding: 1rem 3rem;
-    }
-    .displaycookiemsg{
-        display: none;
-    }
-    .coursecatalogue {
-        right: 6rem !important;
-        position: absolute;
-        margin: 1rem;
-    }
-    .coursecatalogue a{
-        color: #949397;
-        font-weight: 200;
-        text-decoration: none;
-        font-size: larger;
-    }
 
     #page-wrapper {
         padding-bottom: 0;
@@ -32,7 +9,7 @@
             margin-top: 0;
             background-size: cover;
             background-position: center;
-            min-height: 89.5vh;
+            min-height: 100vh;
         }
 
         &::after {
@@ -61,20 +38,17 @@
     .loginpanel {
         border-radius: $m-login-padding;
         border: none;
-        opacity: .95;
 
         .card-block {
             padding: 0;
 
             .form {
-                padding: 3rem 4rem;
-                // height: $m-login-boxheight;
-                // max-height: $m-login-boxheight; 
-                height: fit-content;
-                max-height: fit-content;
+                padding: 20px 15px;
+                height: $m-login-boxheight;
+                max-height: $m-login-boxheight;
+
                 .welcome {
                     font-size: 1.2rem;
-                    text-align:center;
                 }
 
                 .input-group-addon {
@@ -87,7 +61,6 @@
                     background-color: #eceeef;
                     border: 1px solid rgba(0,0,0,.15);
                     border-right: 0;
-                    border-radius: 3px;
                 }
                 .input-group-username .input-group-addon {
                     border-bottom-left-radius: 0;
@@ -102,20 +75,52 @@
                 #password {
                     border: 1px solid rgba(0, 0, 0, .15);
                     height: 44px;
-                    border-radius: 3px;
                 }
                 #username {
                     border-bottom-left-radius: 0;
                     border-bottom-right-radius: 0;
                 }
                 #password {
-                    
+                    border-top: 0;
                     border-top-left-radius: 0;
                     border-top-right-radius: 0;
                 }
                 #loginbtn {
                     padding: 0.5rem;
-                    border-radius: 3px;
+                }
+            }
+
+            .instructions {
+                background-color: $brand-primary;
+                padding: 60px 15px;
+                color: #fff;
+                min-height: $m-login-boxheight;
+
+                img {
+                    max-width: 100%;
+                }
+
+                .text-info {
+                    color: #fff !important;
+                }
+
+                h2,
+                h3 {
+                    color: #fff;
+                }
+
+                hr {
+                    width: 50%;
+                    margin-top: 0;
+                    border-top: 1px solid rgba(255, 255, 255, .7);
+                }
+
+                .m-t-2 {
+                    margin-top: 1rem !important;
+                }
+
+                .btn-secondary {
+                    border: none;
                 }
             }
         }
@@ -132,39 +137,21 @@
 }
 
 #page-login-signup {
-    background-color: #ffffff;
     margin-left: 0;
-    // #page-wrapper {
-    //     padding-bottom: 0;
-    //     margin-bottom: 0;
-
-    //     &:after {
-    //         min-height: 0;
-    //     }
-
-    //     #page {
-    //         margin-top: 0;
-    //         padding-top: 50px;
-    //         padding-bottom: 50px;
-    //     }
-    // }
-
-        #page-wrapper {
+    #page-wrapper {
         padding-bottom: 0;
         margin-bottom: 0;
 
-        #page {
-            margin-top: 0;
-            background-size: cover;
-            background-position: center;
-            min-height: 89.5vh;
-        }
-
-        &::after {
+        &:after {
             min-height: 0;
         }
-    }
 
+        #page {
+            margin-top: 0;
+            padding-top: 50px;
+            padding-bottom: 50px;
+        }
+    }
 }
 
 .potentialidplist .potentialidp {

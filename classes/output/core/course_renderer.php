@@ -46,7 +46,7 @@ class course_renderer extends \core_course_renderer {
     /**
      * Renders the list of courses
      *
-     * This is internal function, please use {@link core_course_renderer::courses_list()} or another public
+     * This is internal function, please use core_course_renderer::courses_list()    or another public
      * method from outside of the class
      *
      * If list of courses is specified in $courses; the argument $chelper is only used
@@ -161,7 +161,7 @@ class course_renderer extends \core_course_renderer {
      * Displays one course in the list of courses.
      *
      * This is an internal function, to display an information about just one course
-     * please use {@link core_course_renderer::course_info_box()}
+     * please use core_course_renderer::course_info_box()
      *
      * @param coursecat_helper $chelper various display options
      * @param core_course_list_element|stdClass $course
@@ -271,21 +271,23 @@ class course_renderer extends \core_course_renderer {
 
         $content .= html_writer::end_tag('div');
 
-        $content .= html_writer::start_tag('div', array('class' => 'card-footer'));
+        if (isloggedin()) {
+            $content .= html_writer::start_tag('div', array('class' => 'card-footer'));
 
-        // Print enrolmenticons.
-        if ($icons = enrol_get_course_info_icons($course)) {
-            foreach ($icons as $pixicon) {
-                $content .= $this->render($pixicon);
+            // Print enrolmenticons.
+            if ($icons = enrol_get_course_info_icons($course)) {
+                foreach ($icons as $pixicon) {
+                    $content .= $this->render($pixicon);
+                }
             }
+
+            $content .= html_writer::start_tag('div', array('class' => 'pull-right'));
+            $content .= html_writer::link(new moodle_url('/course/view.php', array('id' => $course->id)),
+                get_string('access', 'theme_moove'), array('class' => 'card-link btn btn-primary'));
+            $content .= html_writer::end_tag('div'); // End pull-right.
+
+            $content .= html_writer::end_tag('div'); // End card-footer.
         }
-
-        $content .= html_writer::start_tag('div', array('class' => 'pull-right'));
-        $content .= html_writer::link(new moodle_url('/course/view.php', array('id' => $course->id)),
-            get_string('access', 'theme_moove'), array('class' => 'card-link btn btn-primary'));
-        $content .= html_writer::end_tag('div'); // End pull-right.
-
-        $content .= html_writer::end_tag('div'); // End card-block.
 
         // Display course category if necessary (for example in search results).
         if ($chelper->get_show_courses() == self::COURSECAT_SHOW_COURSES_EXPANDED_WITH_CAT) {

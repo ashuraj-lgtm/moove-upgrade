@@ -75,11 +75,10 @@ class core_renderer extends \theme_boost\output\core_renderer {
      * @return mixed
      */
     public function render_lang_menu() {
-        global $CFG;
         $langs = get_string_manager()->get_list_of_translations();
-
         $haslangmenu = $this->lang_menu() != '';
         $menu = new custom_menu;
+
         if ($haslangmenu) {
             $strlang = get_string('language');
             $currentlang = current_language();
@@ -96,25 +95,7 @@ class core_renderer extends \theme_boost\output\core_renderer {
             foreach ($menu->get_children() as $item) {
                 $context = $item->export_for_template($this);
             }
-           
-            if (isset($context->children)) {
-                foreach ($context->children as  $menulang) {
-                    $parts = parse_url($menulang->url);
-                    parse_str($parts['query'], $query);
-                    if (array_key_exists('amp;lang', $query) ) {
-                    $languagesym =  $query['amp;lang'];
-                    }else{
-                        $languagesym =  $query['lang'];
-                    }
-                    if ($languagesym == 'en') {
-                        $menulang->image = $CFG->wwwroot.'/theme/moove/pix/uk.png';
-                    }
-                    if ($languagesym == 'sw') {
-                        $menulang->image = $CFG->wwwroot.'/theme/moove/pix/kenya.png';
-                    }
-                }
-            }
-            
+
             if (isset($context)) {
                 return $this->render_from_template('theme_moove/lang_menu', $context);
             }
@@ -303,7 +284,240 @@ class core_renderer extends \theme_boost\output\core_renderer {
         return !empty($identityproviders);
     }
 
+    /**
+     * Construct a user menu, returning HTML that can be echoed out by a
+     * layout file.
+     *
+     * @param stdClass $user A user object, usually $USER.
+     * @param bool $withlinks true if a dropdown should be built.
+     * @return string HTML fragment.
+     */
+    public function user_menu($user = null, $withlinks = null) {
+        global $USER, $CFG;
+        require_once($CFG->dirroot . '/user/lib.php');
 
+        if (is_null($user)) {
+            $user = $USER;
+        }
+
+        // Note: this behaviour is intended to match that of core_renderer::login_info,
+        // but should not be considered to be good practice; layout options are
+        // intended to be theme-specific. Please don't copy this snippet anywhere else.
+        if (is_null($withlinks)) {
+            $withlinks = empty($this->page->layout_options['nologinlinks']);
+        }
+
+        // Add a class for when $withlinks is false.
+        $usermenuclasses = 'usermenu';
+        if (!$withlinks) {
+            $usermenuclasses .= ' withoutlinks';
+        }
+
+        $returnstr = "";
+
+        // If during initial install, return the empty return string.
+        if (during_initial_install()) {
+            return $returnstr;
+        }
+
+        $loginpage = $this->is_login_page();
+        $loginurl = get_login_url();
+        // If not logged in, show the typical not-logged-in string.
+        if (!isloggedin()) {
+            $returnstr = '';
+            if (!$loginpage) {
+                $returnstr .= "<a class='btn btn-login-top' href=\"$loginurl\">" . get_string('login') . '</a>';
+            }
+
+            $theme = theme_config::load('moove');
+
+            if (!$theme->settings->disablefrontpageloginbox) {
+                return html_writer::tag(
+                    'li',
+                    html_writer::span(
+                        $returnstr,
+                        'login'
+                    ),
+                    array('class' => $usermenuclasses)
+                );
+            }
+
+            $context = [
+                'loginurl' => $loginurl,
+                'logintoken' => \core\session\manager::get_login_token(),
+                'canloginasguest' => $CFG->guestloginbutton and !isguestuser(),
+                'canloginbyemail' => !empty($CFG->authloginviaemail),
+                'cansignup' => $CFG->registerauth == 'email' || !empty($CFG->registerauth)
+
+            ];
+
+            return $this->render_from_template('theme_moove/frontpage_guest_loginbtn', $context);
+        }
+
+        // If logged in as a guest user, show a string to that effect.
+        if (isguestuser()) {
+            $returnstr = get_string('loggedinasguest');
+            if (!$loginpage && $withlinks) {
+                $returnstr .= " (<a href=\"$loginurl\">".get_string('login').'</a>)';
+            }
+
+            return html_writer::tag(
+                'li',
+                html_writer::span(
+                    $returnstr,
+                    'login'
+                ),
+                array('class' => $usermenuclasses)
+            );
+        }
+
+        // Get some navigation opts.
+        $opts = user_get_user_navigation_info($user, $this->page);
+
+        $avatarclasses = "avatars";
+        $avatarcontents = html_writer::span($opts->metadata['useravatar'], 'avatar current');
+        $usertextcontents = '';
+
+        // Other user.
+        if (!empty($opts->metadata['asotheruser'])) {
+            $avatarcontents .= html_writer::span(
+                $opts->metadata['realuseravatar'],
+                'avatar realuser'
+            );
+            $usertextcontents = $opts->metadata['realuserfullname'];
+            $usertextcontents .= html_writer::tag(
+                'span',
+                get_string(
+                    'loggedinas',
+                    'moodle',
+                    html_writer::span(
+                        $opts->metadata['userfullname'],
+                        'value'
+                    )
+                ),
+                array('class' => 'meta viewingas')
+            );
+        }
+
+        // Role.
+        if (!empty($opts->metadata['asotherrole'])) {
+            $role = core_text::strtolower(preg_replace('#[ ]+#', '-', trim($opts->metadata['rolename'])));
+            $usertextcontents .= html_writer::span(
+                $opts->metadata['rolename'],
+                'meta role role-' . $role
+            );
+        }
+
+        // User login failures.
+        if (!empty($opts->metadata['userloginfail'])) {
+            $usertextcontents .= html_writer::span(
+                $opts->metadata['userloginfail'],
+                'meta loginfailures'
+            );
+        }
+
+        // MNet.
+        if (!empty($opts->metadata['asmnetuser'])) {
+            $mnet = strtolower(preg_replace('#[ ]+#', '-', trim($opts->metadata['mnetidprovidername'])));
+            $usertextcontents .= html_writer::span(
+                $opts->metadata['mnetidprovidername'],
+                'meta mnet mnet-' . $mnet
+            );
+        }
+
+        $returnstr .= html_writer::span(
+            html_writer::span($usertextcontents, 'usertext') .
+            html_writer::span($avatarcontents, $avatarclasses),
+            'userbutton'
+        );
+
+        // Create a divider (well, a filler).
+        $divider = new action_menu_filler();
+        $divider->primary = false;
+
+        $actionmenu = new action_menu();
+        $actionmenu->set_menu_trigger(
+            $returnstr
+        );
+        $actionmenu->set_alignment(action_menu::TR, action_menu::BR);
+        $actionmenu->set_nowrap_on_items();
+        if ($withlinks) {
+            $navitemcount = count($opts->navitems);
+            $idx = 0;
+
+            // Adds username to the first item of usermanu.
+            $userinfo = new stdClass();
+            $userinfo->itemtype = 'text';
+            $userinfo->title = $user->firstname . ' ' . $user->lastname;
+            $userinfo->url = new moodle_url('/user/profile.php', array('id' => $user->id));
+            $userinfo->pix = 'i/user';
+
+            array_unshift($opts->navitems, $userinfo);
+
+            foreach ($opts->navitems as $value) {
+
+                switch ($value->itemtype) {
+                    case 'divider':
+                        // If the nav item is a divider, add one and skip link processing.
+                        $actionmenu->add($divider);
+                        break;
+
+                    case 'invalid':
+                        // Silently skip invalid entries (should we post a notification?).
+                        break;
+
+                    case 'text':
+                        $amls = new action_menu_link_secondary(
+                            $value->url,
+                            $pix = new pix_icon($value->pix, $value->title, null, array('class' => 'iconsmall')),
+                            $value->title,
+                            array('class' => 'text-username')
+                        );
+
+                        $actionmenu->add($amls);
+                        break;
+
+                    case 'link':
+                        // Process this as a link item.
+                        $pix = null;
+                        if (isset($value->pix) && !empty($value->pix)) {
+                            $pix = new pix_icon($value->pix, $value->title, null, array('class' => 'iconsmall'));
+                        } else if (isset($value->imgsrc) && !empty($value->imgsrc)) {
+                            $value->title = html_writer::img(
+                                $value->imgsrc,
+                                $value->title,
+                                array('class' => 'iconsmall')
+                            ) . $value->title;
+                        }
+
+                        $amls = new action_menu_link_secondary(
+                            $value->url,
+                            $pix,
+                            $value->title,
+                            array('class' => 'icon')
+                        );
+                        if (!empty($value->titleidentifier)) {
+                            $amls->attributes['data-title'] = $value->titleidentifier;
+                        }
+                        $actionmenu->add($amls);
+                        break;
+                }
+
+                $idx++;
+
+                // Add dividers after the first item and before the last item.
+                if ($idx == 1 || $idx == $navitemcount) {
+                    $actionmenu->add($divider);
+                }
+            }
+        }
+
+        return html_writer::tag(
+            'li',
+            $this->render($actionmenu),
+            array('class' => $usermenuclasses)
+        );
+    }
 
     /**
      * Secure login info.
@@ -359,13 +573,13 @@ class core_renderer extends \theme_boost\output\core_renderer {
 
         $iconattrs = array(
                         'class' => 'slicon-magnifier',
-                        'title' => get_string('search', 'theme_moove'),
-                        'aria-label' => get_string('search', 'theme_moove'),
+                        'title' => get_string('search', 'search'),
+                        'aria-label' => get_string('search', 'search'),
                         'aria-hidden' => 'true');
         $searchicon = html_writer::tag('i', '', $iconattrs);
 
         $formattrs = array('class' => 'search-input-form', 'action' => $CFG->wwwroot . '/search/index.php');
-        $inputattrs = array('type' => 'text', 'name' => 'q', 'placeholder' => get_string('search', 'theme_moove'),
+        $inputattrs = array('type' => 'text', 'name' => 'q', 'placeholder' => get_string('search', 'search'),
             'size' => 13, 'tabindex' => -1, 'id' => 'id_q_' . $identifier, 'class' => 'form-control');
 
         $contents = html_writer::tag('label', get_string('enteryoursearchquery', 'search'),
@@ -635,496 +849,4 @@ class core_renderer extends \theme_boost\output\core_renderer {
 
         return ' id="'. $this->body_id().'" class="'.$this->body_css_classes($additionalclasses).'"';
     }
-
-        /**
-     * Construct a user menu, returning HTML that can be echoed out by a
-     * layout file.
-     *
-     * @param stdClass $user A user object, usually $USER.
-     * @param bool $withlinks true if a dropdown should be built.
-     * @return string HTML fragment.
-     */
-    public function user_menu($user = null, $withlinks = null) {
-        global $USER, $CFG , $DB;
-        require_once($CFG->dirroot . '/user/lib.php');
-
-        if (is_null($user)) {
-            $user = $USER;
-        }
-
-
-        // Note: this behaviour is intended to match that of core_renderer::login_info,
-        // but should not be considered to be good practice; layout options are
-        // intended to be theme-specific. Please don't copy this snippet anywhere else.
-        if (is_null($withlinks)) {
-            $withlinks = empty($this->page->layout_options['nologinlinks']);
-        }
-
-        // Add a class for when $withlinks is false.
-        $usermenuclasses = 'usermenu';
-        if (!$withlinks) {
-            $usermenuclasses .= ' withoutlinks';
-        }
-
-        $returnstr = "";
-
-        // If during initial install, return the empty return string.
-        if (during_initial_install()) {
-            return $returnstr;
-        }
-
-        $loginpage = $this->is_login_page();
-        $loginurl = get_login_url();
-        // If not logged in, show the typical not-logged-in string.
-        if (!isloggedin()) {
-            $returnstr = '';
-            if (!$loginpage) {
-                $returnstr .= "<a class='btn btn-login-top' href=\"$loginurl\">" . get_string('login') . '</a>';
-            }
-
-            $theme = theme_config::load('moove');
-
-            if (!$theme->settings->disablefrontpageloginbox) {
-                return html_writer::tag(
-                    'li',
-                    html_writer::span(
-                        $returnstr,
-                        'login'
-                    ),
-                    array('class' => $usermenuclasses)
-                );
-            }
-
-            $context = [
-                'loginurl' => $loginurl,
-                'logintoken' => \core\session\manager::get_login_token(),
-                'canloginasguest' => $CFG->guestloginbutton and !isguestuser(),
-                'canloginbyemail' => !empty($CFG->authloginviaemail),
-                'cansignup' => $CFG->registerauth == 'email' || !empty($CFG->registerauth)
-
-            ];
-
-            return $this->render_from_template('theme_moove/frontpage_guest_loginbtn', $context);
-        }
-
-        // If logged in as a guest user, show a string to that effect.
-        if (isguestuser()) {
-            $returnstr = get_string('loggedinasguest');
-            if (!$loginpage && $withlinks) {
-                $returnstr .= " (<a href=\"$loginurl\">".get_string('login').'</a>)';
-            }
-
-            return html_writer::tag(
-                'li',
-                html_writer::span(
-                    $returnstr,
-                    'login'
-                ),
-                array('class' => $usermenuclasses)
-            );
-        }
-
-        // Get some navigation opts.
-        $opts = user_get_user_navigation_info($user, $this->page);
-
-        $avatarclasses = "avatars";
-        $avatarcontents = html_writer::span($opts->metadata['useravatar'], 'avatar current');
-        $usertextcontents = '';
-
-        // Other user.
-        if (!empty($opts->metadata['asotheruser'])) {
-            $avatarcontents .= html_writer::span(
-                $opts->metadata['realuseravatar'],
-                'avatar realuser'
-            );
-            $usertextcontents = $opts->metadata['realuserfullname'];
-            $usertextcontents .= html_writer::tag(
-                'span',
-                get_string(
-                    'loggedinas',
-                    'moodle',
-                    html_writer::span(
-                        $opts->metadata['userfullname'],
-                        'value'
-                    )
-                ),
-                array('class' => 'meta viewingas')
-            );
-        }
-
-        // Role.
-        if (!empty($opts->metadata['asotherrole'])) {
-            $role = core_text::strtolower(preg_replace('#[ ]+#', '-', trim($opts->metadata['rolename'])));
-            $usertextcontents .= html_writer::span(
-                $opts->metadata['rolename'],
-                'meta role role-' . $role
-            );
-        }
-
-        // User login failures.
-        if (!empty($opts->metadata['userloginfail'])) {
-            $usertextcontents .= html_writer::span(
-                $opts->metadata['userloginfail'],
-                'meta loginfailures'
-            );
-        }
-
-        // MNet.
-        if (!empty($opts->metadata['asmnetuser'])) {
-            $mnet = strtolower(preg_replace('#[ ]+#', '-', trim($opts->metadata['mnetidprovidername'])));
-            $usertextcontents .= html_writer::span(
-                $opts->metadata['mnetidprovidername'],
-                'meta mnet mnet-' . $mnet
-            );
-        }
-
-        $returnstr .= html_writer::span(
-            html_writer::span($usertextcontents, 'usertext') .
-            html_writer::span($avatarcontents, $avatarclasses),
-            'userbutton'
-        );
-
-        /* coded by suraj maurya */
-        
-        // Create a divider (well, a filler).
-        $divider = new action_menu_filler();
-        $divider->primary = false;
-
-        $actionmenu = new action_menu();
-        $actionmenu->set_menu_trigger(
-            $returnstr
-        );
-        $actionmenu->set_alignment(action_menu::TR, action_menu::BR);
-        $actionmenu->set_nowrap_on_items();
-        if ($withlinks) {
-            $navitemcount = count($opts->navitems);
-            $idx = 0;
-
-            // Adds username to the first item of usermanu.
-            $userinfo = new stdClass();
-            $userinfo->itemtype = 'text';
-            $userinfo->title = $user->firstname . ' ' . $user->lastname;
-            $userinfo->url = new moodle_url('/user/profile.php', array('id' => $user->id));
-            $userinfo->pix = 'i/user';
-            
-            array_unshift($opts->navitems, $userinfo);
-
-            /*  Add help link here*/
-
-            foreach ($opts->navitems as $value) {
-
-                switch ($value->itemtype) {
-                    case 'divider':
-                        // If the nav item is a divider, add one and skip link processing.
-                        $actionmenu->add($divider);
-                        break;
-
-                    case 'invalid':
-                        // Silently skip invalid entries (should we post a notification?).
-                        break;
-
-                    case 'text':
-                        $amls = new action_menu_link_secondary(
-                            $value->url,
-                            $pix = new pix_icon($value->pix, $value->title, null, array('class' => 'iconsmall')),
-                            $value->title,
-                            array('class' => 'text-username')
-                        );
-
-                        $actionmenu->add($amls);
-                        break;
-
-                    case 'link':
-                        // Process this as a link item.
-                        $pix = null;
-                        if (isset($value->pix) && !empty($value->pix)) {
-                            $pix = new pix_icon($value->pix, $value->title, null, array('class' => 'iconsmall'));
-                        } else if (isset($value->imgsrc) && !empty($value->imgsrc)) {
-                            $value->title = html_writer::img(
-                                $value->imgsrc,
-                                $value->title,
-                                array('class' => 'iconsmall')
-                            ) . $value->title;
-                        }
-
-                        $amls = new action_menu_link_secondary(
-                            $value->url,
-                            $pix,
-                            $value->title,
-                            array('class' => 'icon')
-                        );
-                        if (!empty($value->titleidentifier)) {
-                            $amls->attributes['data-title'] = $value->titleidentifier;
-                        }
-                        $actionmenu->add($amls);
-                        break;
-                }
-
-                $idx++;
-
-                // Add dividers after the first item and before the last item.
-                if ($idx == 1 || $idx == $navitemcount) {
-                    $actionmenu->add($divider);
-                }
-            }
-        }
-
-        return html_writer::tag(
-            'li',
-            $this->render($actionmenu),
-            array('class' => $usermenuclasses)
-        );
-    }
-
-    public function customlilogout($user = null){
-        global $USER, $CFG , $DB, $OUTPUT;
-        require_once($CFG->dirroot . '/user/lib.php');
-        if (is_null($user)) {
-            $user = $USER;
-        }
-        if (isloggedin()) {
-            $opts = user_get_user_navigation_info($user, $this->page);
-            if (count($opts->navitems) > 0 ) {
-                foreach ($opts->navitems as $navitem) {
-                 $stritems = explode(',', $navitem->titleidentifier);
-                    if (!empty($stritems)) {
-                        if (in_array('logout', $stritems)) {
-                            
-                           return html_writer::tag('li', 
-                                html_writer::tag('a', '<i class="fa fa-sign-out" aria-hidden="true"></i>', 
-                                    array('class' =>'logoutbtnclick','href'=>'Javascript(0);','type' =>'button','data-toggle'=>'modal','data-target'=>"#logoutmodal", 'data-logouturl' => $navitem->url )
-                                ),
-                            array('class' => 'nav-link'));
-                        }
-                    }
-                }
-            } 
-           
-        }else{
-            $loginurl = get_login_url();
-            return "<a class='btn btn-login-top' href=\"$loginurl\">" . get_string('login') . '</a>';
-        }
-    }
-
-    public function loggeruserdetail($user = null){
-        global $USER, $CFG , $DB;
-        require_once($CFG->dirroot . '/user/lib.php');
-        if (is_null($user)) {
-            $user = $USER;
-        }
-        $userrole = null;
-        if (!is_siteadmin()) {
-            $roleid = null;
-
-            if (!is_null($user)) {
-                $roleassignments = $DB->get_records('role_assignments', ['userid' => $user->id]);
-                if (!empty($roleassignments)) {
-                    foreach ($roleassignments as  $roles) {
-                        $roleid = $roles->roleid;
-                    }
-                }
-            }
-
-            if (!is_null($roleid)) {   
-                $roleinfo = $DB->get_record('role', ['id' => $roleid]);
-                if (!is_null($roleinfo)) {
-                   $userrole = $roleinfo->name ? $roleinfo->name : $roleinfo->shortname;
-                }
-            }
-        }else{
-            /* site admin */
-            $userrole = 'Admin';
-        }
-        if (!isloggedin()) {
-            return false;
-        }else{
-            $returnuserinfo  = html_writer::start_tag('li', array('class' => 'nav-link userlinkprofile'));
-            $returnuserinfo .= html_writer::start_tag('a', array('class' => '', 'href' => new moodle_url('/user/profile.php', array('id' => $user->id)) ));
-            $returnuserinfo .= html_writer::start_span('namespan') . $user->firstname . ' ' . $user->lastname . html_writer::end_span();
-            $returnuserinfo .= html_writer::start_span('border-right').''.html_writer::end_span();
-            $returnuserinfo .= html_writer::start_span('rolespan') . $userrole . html_writer::end_span();
-            $returnuserinfo .= html_writer::end_tag('a');
-            $returnuserinfo .= html_writer::end_tag('li');
-            return $returnuserinfo;
-        }
-    }
-
-    public function gradepointuser($user = null, $gradepoint = 0){
-    	global $USER, $CFG , $DB;
-        require_once($CFG->dirroot . '/user/lib.php');
-        if (is_null($user)) {
-            $user = $USER;
-        }
-
-        if (isloggedin()) {
-            $opts = user_get_user_navigation_info($user, $this->page);
-            if (count($opts->navitems) > 0 ) {
-                foreach ($opts->navitems as $navitem) {
-                 $stritems = explode(',', $navitem->titleidentifier);
-                    if (!empty($stritems)) {
-                        if (in_array('grades', $stritems)) {
-                           return html_writer::tag('li', 
-                                html_writer::tag('a', $gradepoint."  "." Points ", 
-                                    array('class' => 'btn btn-success', 'href' => $navitem->url, 'type' => 'button')
-                                ),
-                            array('class' => 'nav-link'));
-                        }
-                    }
-                }
-            }
-           
-        }else{
-            return false;
-        }
-    }
-
-        public function messageuser($user = null){
-        global $USER, $CFG , $DB;
-        require_once($CFG->dirroot . '/user/lib.php');
-        if (is_null($user)) {
-            $user = $USER;
-        }
-        if (isloggedin()) {
-            $opts = user_get_user_navigation_info($user, $this->page);
-            if (count($opts->navitems) > 0 ) {
-                foreach ($opts->navitems as $navitem) {
-                 $stritems = explode(',', $navitem->titleidentifier);
-                    if (!empty($stritems)) {
-                        if (in_array('messages', $stritems)) {
-                           return html_writer::tag('li', 
-                                html_writer::tag('a', $navitem->title , 
-                                    array('class' => 'nav-item', 'href' => $navitem->url)
-                                ),
-                            array('class' => 'nav-link message'));
-                        }
-                    }
-                }
-            }
-           
-        }else{
-            return false;
-        }
-    }
-
-    public function helpmenu($user = null, $withlinks = null) {
-        global $USER, $CFG , $DB;
-        require_once($CFG->dirroot . '/user/lib.php');
-
-        if (is_null($user)) {
-            $user = $USER;
-        }
-
-        $returnstr = "";
-
-        $returnstr .= get_string('help', 'theme_moove');
-
-        $divider = new action_menu_filler();
-        $divider->primary = false;
-
-        $actionmenu = new action_menu();
-        $actionmenu->set_menu_trigger(
-            $returnstr
-        );
-        $actionmenu->set_alignment(action_menu::TR, action_menu::BR);
-        $actionmenu->set_nowrap_on_items();
-
-       	/* creating help menu */
-
-       	    $returnuserinfo  = html_writer::start_tag('div', array('class' => 'row  helpmaindiv'));
-            $returnuserinfo .= html_writer::start_span('helpclose').'<i class="fa fa-times-circle" aria-hidden="true"></i>'.html_writer::end_span();
-       	    $returnuserinfo .= html_writer::start_tag('div', array('class' => 'col-md-4  helpmenu'));
-			$returnuserinfo .= html_writer::start_tag('div', array('class' => 'nav flex-column nav-pills', 
-																	"aria-orientation" => "vertical", 
-																	"id"=>"v-pills-tab", 
-																	"role"=>"tablist"));
- 			$returnuserinfo .= html_writer::tag('a', "knowledge base" , 
-											 				array("class"=>"nav-link active", 
-											 					"id"=>"v-pills-home-tab",
-											 					"data-toggle"=>"pill", 
-											 					"href" => "#v-pills-home",  
-											 					"role"=>"tab", 
-											 					"aria-controls"=>"v-pills-home",  
-											 					"aria-selected"=>"true"));
- 			$returnuserinfo .= html_writer::tag('a', "Contact Support" , 
-										 					array("class"=>"nav-link ", 
-												 				"id"=>"v-pills-second-tab",
-												 				"data-toggle"=>"pill", 
-												 				"href" => "#v-pills-second",  
-												 				"role"=>"tab", 
-												 				"aria-controls"=>"v-pills-second",  
-												 				"aria-selected"=>"true"));
-            $returnuserinfo .= html_writer::end_tag('div');
-            $returnuserinfo .= html_writer::end_tag('div');
-   
-            $returnuserinfo .= html_writer::start_tag('div', array('class' => 'col-md-8 helpworkingarea'));
-
-            $returnuserinfo .= html_writer::start_tag('div', array('class' => 'tab-content', "id" => "v-pills-tabContent"));
-
-             $returnuserinfo .= html_writer::tag('div', self::searchformdrop(), 
-											             	array('class' => 'tab-pane fade show active', 
-											             		"id" => "v-pills-home", 
-											             		"role"=>"tabpanel", 
-											             		"aria-labelledby"=>"v-pills-home-tab"));
-           
-             $returnuserinfo .= html_writer::tag('div', self::createfeedbackform(), 
-											             	array('class' => 'tab-pane fade', 
-											             		"id" => "v-pills-second", 
-											             		"role"=>"tabpanel", 
-											             		"aria-labelledby"=>"v-pills-second-tab"));
-            
-            $returnuserinfo .= html_writer::end_tag('div');
-
-            $returnuserinfo .= html_writer::end_tag('div');
-            $returnuserinfo .= html_writer::end_tag('div');
-
-
-
-       	$actionmenu->add($returnuserinfo);
-
-        if (isloggedin()) {
-        return html_writer::tag(
-            'li',
-            $this->render($actionmenu),
-            array('class' => 'mainhelpcontainer')
-        );  
-        }else{
-            return false;
-        }
-
-    }
-
-    public function createfeedbackform(){
-
-        $feedbackformcontent = html_writer::start_tag('div' , array('class' => 'p-3 feedbackform'));
-        $feedbackformcontent .= html_writer::start_tag('form' , array('class' => 'formfeed' , 'id' => 'feedbackform'));
-        $feedbackformcontent .= html_writer::tag('input', '' ,array('name' => 'subject', 'id' => 'feedsubject', 'class' => 'form-control my-3', 'type' => 'text', 'placeholder' => 'Subject'));
-        $feedbackformcontent .= html_writer::tag('textarea','' ,array('name' => 'message', 'id' => 'feedmessage', 'class' => 'form-control my-3', 'placeholder' => 'Message'));
-        $feedbackformcontent .= html_writer::start_tag('label' ,array('class' => 'ml-5', 'for' => 'feedfile', 'id' => 'filelabelimage' ));
-        $feedbackformcontent .= html_writer::tag('input',"" ,array('name' => 'feedfile', 'id' => 'feedfile', 'class' => 'form-control my-3', 'type' => 'file', 'placeholder' => 'Upload a file'));
-        $feedbackformcontent .= html_writer::start_span('attachement').'<i class="fa fa-paperclip" aria-hidden="true"></i>'.html_writer::end_span();
-        $feedbackformcontent .= html_writer::start_span('filetext').'Upload a file'.html_writer::end_span();
-        $feedbackformcontent .= html_writer::end_tag('label');
-
-        $feedbackformcontent .= html_writer::tag('input', "",array('name' => 'submit', 'id' => 'submitfeed', 'class' => 'btn btn-success my-3', 'type' => 'submit', 'value' => 'Send'));
-        
-        $feedbackformcontent .= html_writer::end_tag('form');
-        $feedbackformcontent .= html_writer::end_tag('div');
-    return $feedbackformcontent;
-    }
-    public function searchformdrop(){
-          $searchform =  html_writer::start_tag('div',array('class' => 'p-3 searchform'));
-          $searchform .= html_writer::start_tag('form',array('class'=>'formsearch','id'=>'coursesearch','action'=>'/course/search.php','method'=>'get'));
-          $searchform .=  html_writer::start_tag('div',array('class' => 'input-group'));
-          $searchform .=  html_writer::tag('input','',array('id'=>'shortsearchbox', 'type'=>'text', 'size'=>'12', 'name'=>'search','class'=>'form-control', "placeholder"=>"Search in course ","aria-label"=>"Search", "aria-describedby"=>"button-addon2"));
-          $searchform .=  html_writer::start_tag('div',array('class' => 'input-group-append'));
-          $searchform .= html_writer::tag('button','<i class="fa fa-search"></i>',array('class' => 'btn btn-outline-secondary',"type"=>"submit","id"=>"button-addon2" ));
-          $searchform .= html_writer::end_tag('div');  
-          $searchform .= html_writer::end_tag('div');  
-          $searchform .= html_writer::end_tag('form');
-          $searchform .= html_writer::end_tag('div');
-        return $searchform;        
-    }
-
- 
-
 }

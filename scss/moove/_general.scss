@@ -18,20 +18,6 @@ body#page-enrol-index {
 body.pagelayout-popup {
     margin-left: 0;
 }
-body{
-    font-size: 0.9em;
-    padding: 0px;
-    line-height: 22px;
-    color: #646464;
-    font-family: "Helvetica", sans-serif;
-}
-p{
-    font-size: 0.9em;
-    padding: 0px;
-    line-height: 22px;
-    color: #646464!important;
-    font-family: "Helvetica", sans-serif;
-}
 
 /*******************
 Headings
@@ -48,11 +34,9 @@ h5,
 .h5,
 h6,
 .h6 {
-    color: $headings-color !important;
-    font-family: "Helvetica", sans-serif;
+    color: $headings-color;
+    font-family: "Poppins", sans-serif;
     font-weight: $headings-font-weight;
-    font-size: 1.15em;
-    line-height: 25px;
 }
 
 body.odafont {
@@ -170,11 +154,3 @@ Progress
 .region_main_settings_menu_proxy {
     background-color: initial;
 }
-#page-my-index {
-    background-color: #ffffff;
-}
-
-#top-footer, #nav-drawer-footer{
-    display: none!important;
-}
-/*    */

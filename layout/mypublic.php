@@ -23,7 +23,6 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-ini_set('memory_limit', '-1');
 
 global $DB;
 
@@ -88,42 +87,11 @@ $templatecontext['hascourses'] = (count($usercourses)) ? true : false;
 $templatecontext['courses'] = array_values($usercourses);
 $templatecontext['user'] = $user;
 $templatecontext['user']->profilepicture = \theme_moove\util\extras::get_user_picture($user, 100);
-$templatecontext['usercard'] = FALSE;
-$templatecontext['enrolledcourses'] = \theme_moove\util\extras::getSelfEnrolledCourses($USER->id);
-$templatecontext['progresscourses'] = \theme_moove\util\extras::getSelfCoursesProgress($USER->id);
-$templatecontext['userfiles'] = \theme_moove\util\extras::userSelfPrivatefiles();
+
 $competencyplans = \theme_moove\util\extras::get_user_competency_plans($user);
-$templatecontext['overviewcourse'] = \theme_moove\util\extras::overviewCourse();
-$templatecontext['userlastlogins'] = \theme_moove\util\extras::userlastlogins();
-$templatecontext['allbadgesuser'] = \theme_moove\util\extras::allbadges();
-$templatecontext['currenttime'] = time();
 $templatecontext['hascompetencyplans'] = (count($competencyplans)) ? true : false;
 $templatecontext['competencyplans'] = $competencyplans;
 
-$studentinfos = new \theme_moove\util\studentinfos();
-
-if (is_object($studentinfos)) {
-    $templatecontext['coursesinprogress'] = $studentinfos->get_totalcourses($USER);
-    $templatecontext['completedcourses'] = $studentinfos->get_completed_courses($USER);
-    $templatecontext['totaltrainingtime'] = $studentinfos->get_total_training_time();
-    $templatecontext['badgescounts'] = $studentinfos->get_badeges_counts();
-    $templatecontext['pointsearned'] = $studentinfos->get_points_earned();
-    if ($USER) {
-    $templatecontext['gridviewcourse'] = $studentinfos->grid_view_course($USER->id);
-    $templatecontext['listviewcourses'] = $studentinfos->list_view_courses($USER->id);
-    $templatecontext['enrolledincourse'] = $studentinfos->enrolledincourse();
-    $templatecontext['totalcertificatetouser'] = $studentinfos->totalcertificatetouser();
-    $templatecontext['studentlevel'] = $studentinfos->studentlevel();
-    $templatecontext['trainingchartpercourse'] = $studentinfos->trainingchartpercourse(); 
-    $templatecontext['getcoursecompletiondata'] = $studentinfos->getcoursecompletiondata()->chartdata;
-    $templatecontext['totalcourses'] = $studentinfos->getcoursecompletiondata()->totalcourses;
-    $templatecontext['totalcompletedcourse'] = $studentinfos->getcoursecompletiondata()->totalcompletedcourse;
-    $templatecontext['testResultChart'] = $studentinfos->testResultChart();
-
-    }
-}
-
 $templatecontext['headerbuttons'] = \theme_moove\util\extras::get_mypublic_headerbuttons($context, $user);
-
 
 echo $OUTPUT->render_from_template('theme_moove/mypublic', $templatecontext);

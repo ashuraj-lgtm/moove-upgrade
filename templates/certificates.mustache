@@ -1,110 +1,57 @@
-<div class="modal fade" id="certificatemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-            <div class="modal-body text-center">
-                <div class="modaladdthml" id="modaladdthml"></div>
-                <button type="button" class="btn btn-success rounded my-2" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template theme_moove/certificates
+
+    Blocks drawer template
+
+    Example context (json): {
+        "title": "Certificates page",
+        "subtitle": "Course certificates",
+        "hascertificates": true,
+        "coursescertificates": {
+            "fullname": "Course fullname",
+            "certificates": [{
+                "downloadurl": "http://certificateurl...",
+                "module": "simplecertificate",
+                "name": "Certificate activity name"
+            }]
+        }
+    }
+}}
 <h2 class="card-title">{{{ title }}}</h2>
 <h3 class="card-subtitle mb-2 text-muted">{{{ subtitle }}}</h3>
 
-
-<table class="table table-bordered" id="certificatestable">
-  <thead>
-    <tr>
-      <th scope="col"> S no. </th>
-      <th scope="col"> Course name</th>
-      <th scope="col"> Instructure </th>
-      <th scope="col"> Exam Score </th>
-      <th scope="col"> Status </th>
-      <th scope="col"> Action </th>
-    </tr>
-  </thead>
-  <tbody>
-    {{# hascourse}}
-    <tr data-status="{{statusint}}" data-course="{{ coursename }}">
-      <th>  </th>
-      <th> {{ coursename }} </th>
-      <th> {{#instructors}} 
-              <span> {{firstname}} {{lastname}} </span> 
-           {{/instructors}} 
-           {{^instructors }} 
-              No Instructor  
-            {{/instructors }} 
-      </th>
-      <th>  </th>
-      <th> {{#status}} {{status}} {{/status}}</th>
-      <th class="text-center">
-        {{#hascertificates}}
-          {{#coursescertificates}}
+{{#hascertificates}}
+    {{#coursescertificates}}
+        <div class="card mb-1">
+            <div class="card-body">
+                <h4 class="card-title">{{{ fullname }}}</h4>
                 {{#certificates}}
-                <a  class="popupclick" data-cert="1" data-href="{{ downloadurl }}"> <i class="fa fa-eye" aria-hidden="true"></i> </a>
+                    <p class="card-text"><a target="_blank" href="{{ downloadurl }}">{{# pix }} icon, {{{ module }}} {{/ pix }} {{{ name }}}</a></p>
                 {{/certificates}}
-          {{/coursescertificates}}
-        {{/hascertificates }}
-        {{^hascertificates}}
-                <a  class="popupclick" data-cert="0"> <i class="fa fa-eye" aria-hidden="true"></i> </a>
-        {{/hascertificates}}
-      </th>
-    </tr>
-    {{/ hascourse}}
-    {{^ hascourse}}
-    <tr class="mergecells"> <th> {{#str}}nohavecertificates, theme_moove{{/str}}</th><th></th><th> </th><th></th><th></th><th></th></tr>
-    {{/ hascourse}}
-  </tbody>
-</table>
-
-{{#js}}
-require(['jquery','jqueryui','datatables'], function($) {
-  
-  $(".popupclick").click(function(){
-    var cert = $(this).data("cert");
-    if(cert == 0){
-        
-        var imagehtml = '<p class="text-center text-muted"> No certificate in this course </p>';
-        $("#modaladdthml").html(imagehtml);
-        $('#certificatemodal').modal('show');
-      
-      }else{
-            var row = $(this).closest("tr");
-            var downloaduserl = $(this).data("href");
-         
-         if (row.data('status') != 1) {
-            var imagehtml = '<p class="text-center text-muted"> You have not passed the examination, Please try again to get the certificate </p>';
-            $("#modaladdthml").html(imagehtml);
-            $('#certificatemodal').modal('show');
-         }else{
-            window.load = downloaduserl;
-         }
-
-      }
-
-  });
-  
-    var t = $('#certificatestable').DataTable( {
-        "columnDefs": [ {
-            "searchable": false,
-            "orderable": false,
-            "targets": 0
-        } ],
-        "order": [[ 1, 'asc' ]]
-    } );
- 
-    t.on( 'order.dt search.dt', function () {
-        t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
-            cell.innerHTML = i+1;
-        } );
-    } ).draw();
-
-
-    
-    return {};
-});
-
-{{/js}}
+            </div>
+        </div>
+    {{/coursescertificates}}
+{{/hascertificates }}
+{{^hascertificates}}
+    <div class="card mt-1">
+        <div class="card-body">
+            <p class="card-text">{{#str}}nohavecertificates, theme_moove{{/str}}</p>
+        </div>
+    </div>
+{{/hascertificates}}

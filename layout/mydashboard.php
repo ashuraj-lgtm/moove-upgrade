@@ -62,15 +62,14 @@ $templatecontext = [
     'draweropenright' => $draweropenright,
     'regionmainsettingsmenu' => $regionmainsettingsmenu,
     'hasregionmainsettingsmenu' => !empty($regionmainsettingsmenu),
-    'is_siteadmin' => is_siteadmin(),
+    'canviewadmininfos' => false
 ];
 
 $themesettings = new \theme_moove\util\theme_settings();
 
 $templatecontext = array_merge($templatecontext, $themesettings->footer_items());
 
-
-if (is_siteadmin()) {
+if (is_siteadmin() && $PAGE->pagetype == 'my-index') {
     $adminifos = new \theme_moove\util\admininfos();
 
     $templatecontext['totalusage'] = $adminifos->get_totaldiskusage();
@@ -78,21 +77,9 @@ if (is_siteadmin()) {
     $templatecontext['totalsuspendedusers'] = $adminifos->get_suspendedusers();
     $templatecontext['totalcourses'] = $adminifos->get_totalcourses();
     $templatecontext['onlineusers'] = $adminifos->get_totalonlineusers();
-}
-$studentinfos = new \theme_moove\util\studentinfos();
 
-if (is_object($studentinfos)) {
-    $templatecontext['coursesinprogress'] = $studentinfos->get_totalcourses($USER);
-    $templatecontext['completedcourses'] = $studentinfos->get_completed_courses($USER);
-    $templatecontext['totaltrainingtime'] = $studentinfos->get_total_training_time();
-    $templatecontext['badgescounts'] = $studentinfos->get_badeges_counts();
-    $templatecontext['pointsearned'] = $studentinfos->get_points_earned();
-    if ($USER) {
-    $templatecontext['gridviewcourse'] = $studentinfos->grid_view_course($USER->id);
-    $templatecontext['listviewcourses'] = $studentinfos->list_view_courses($USER->id);      
-    }
+    $templatecontext['canviewadmininfos'] = true;
 }
-
 
 // Improve boost navigation.
 theme_moove_extend_flat_navigation($PAGE->flatnav);
